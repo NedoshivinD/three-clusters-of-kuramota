@@ -23,9 +23,9 @@ def func(p, t, M, K, alpha):
     f[2] = z
     f[3] = w
     return f
-def func_res(M, K, alpha):
-    x0 = 2*np.pi
-    y0 = 0
+def func_res(x,y,M, K, alpha):
+    x0 = x
+    y0 = y
     z0 = 0
     w0 = 0
     star_point = [x0, y0, z0, w0]
@@ -42,21 +42,21 @@ def read_f(name_f):
         arr = file.read()
         print(arr)
 # res = func_res(8, 0, 3.9269908169872414)   # [6.28319, -0.0, 8, 0, 3.9269908169872414]
-# plt.plot(t, res[:,0])
-# plt.show() 
-# file = open("res_n_9.txt")
+
 ress = []
 with open("E:\\work\\three_klasters_kuramoto\\three-clusters-of-kuramota\\res\\res_n_12.txt") as file:
     for line in file:
         ress.append(lib.razb_str(line.rstrip()))
         # print(line.rstrip())
+        
+with open("E:\\work\\three_klasters_kuramoto\\three-clusters-of-kuramota\\ust\\res_n_12.txt","w") as file:
+    for v in ress:
+        res = func_res(v[0],v[1],v[2],v[3],v[4])
+        if abs(res[0][0] - res[-1][0]) < 0.1:
+            file.write(str(v) + "  -  Ust\n")
+        else:
+            file.write(str(v) + "  -  Ne ust\n")
 
-# print(ress[0])
-for i in ress:
-    print(i)
 
-
-
-# print(razb_str(ress[0]))
 
 
