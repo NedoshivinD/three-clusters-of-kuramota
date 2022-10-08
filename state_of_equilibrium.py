@@ -33,7 +33,7 @@ for n in range(3,18,3):
     Karray = np.linspace(N-1, 0, N, dtype = 'int')
     alarray = np.linspace(0, 2*np.pi, N)
     res = joblib.Parallel(n_jobs = Nstream) (joblib.delayed(res_sist) (M, K, alpha) for M in Marray for K in Karray for alpha in alarray)
-    name = f"res_n_{n}.txt"
+    name = f"res/res_n_{n}.txt"
     # name1 = "bed_res.txt"
     with open(name,"w",encoding="utf-8") as file:
         for x in res:
