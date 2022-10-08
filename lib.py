@@ -1,4 +1,10 @@
 
+N = 9
+m = 1
+eps = 0
+
+
+
 def razb_str(str):
     all = []
     tmp = ''
