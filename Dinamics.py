@@ -3,20 +3,7 @@ import numpy as np
 from scipy import integrate
 import joblib 
 import matplotlib.pyplot as plt
-
-def razb_str(str):
-    all = []
-    tmp = ''
-
-    for c in str:
-        if c==' ' or c=='[':
-            continue
-        if c==',' or c==']':
-            all.append(float(tmp))
-            tmp = ''
-            continue
-        tmp+=c
-    return all
+import lib
 
 N = 9
 Marray = np.linspace(0, N-1, N, dtype = 'int')
@@ -59,16 +46,17 @@ def read_f(name_f):
 # plt.show() 
 # file = open("res_n_9.txt")
 ress = []
-with open("res_n_9.txt") as file:
+with open("E:\\work\\three_klasters_kuramoto\\three-clusters-of-kuramota\\res\\res_n_12.txt") as file:
     for line in file:
-        ress.append(razb_str(line.rstrip()))
+        ress.append(lib.razb_str(line.rstrip()))
         # print(line.rstrip())
 
 # print(ress[0])
-print(ress)
+for i in ress:
+    print(i)
 
 
 
-print(razb_str(ress[0]))
+# print(razb_str(ress[0]))
 
 
