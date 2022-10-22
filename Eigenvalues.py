@@ -1,66 +1,97 @@
 from re import L
+from tkinter import Y
 from lib import *
 import numpy as np
 from numpy import linalg as LA
 from Dinamics import *
 
-def matrix(x, y, K, M, alpha):
-    f = []
-    f.append([0, 0, 1, 0])
-    f.append([0, 0, 0, 1])
-    f.append([1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(x - alpha) - (N - M - K)*np.cos(x-y-alpha)),
-            1/(N*m)*(-(N-M-K)*np.cos(y + alpha) + (N-M-K)*np.cos(x-y-alpha)), -1/m, 0])
-    f.append([1/(N*m)*(-M*np.cos(x+y) + M*np.cos(y-x-alpha)),
-            1/(N*m)*(-M*np.cos(x+y)-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha)),
-            0, -1/m])
-    return(f)
+class Three_klasters(object):
+    
+    def __init__(self) -> None:
+        pass
+        
+    def matrix(self,param):
+        x,y,K,M,alpha = param
+        f = []
+        f.append([0, 0, 1, 0])
+        f.append([0, 0, 0, 1])
+        f.append([1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(x - alpha) - (N - M - K)*np.cos(x-y-alpha)),
+                1/(N*m)*(-(N-M-K)*np.cos(y + alpha) + (N-M-K)*np.cos(x-y-alpha)), -1/m, 0])
+        f.append([1/(N*m)*(-M*np.cos(x+y) + M*np.cos(y-x-alpha)),
+                1/(N*m)*(-M*np.cos(x+y)-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha)),
+                0, -1/m])
+        return(f)
+    
+    def yakobi(self,param):   
+        matrix_yak = self.matrix(param= param)
+        lam, vect = LA.eig(matrix_yak)
+        return(lam)
 
-def yakobi(x, y, K, M, alpha):    
-    matrix_yak = matrix(x, y, K, M, alpha)
-    lam, vect = LA.eig(matrix_yak)
-    return(lam)
+    def razbor_txt(self,name = "res\\n_\\res_n_.txt", chislo = 9):
+        tmp = name[0:-4]+f"{chislo}"+name[-4:]
+        tmp = tmp[0:6]+f"{chislo}"+tmp[6:]
+        ress = []
+        with open(tmp) as file:
+            for line in file:
+                ress.append(razb_str(line.rstrip()))
+        return ress
+    
+    def some_sob_numb(self,param):# массив вида [[*,*,*,*],[*,*,*,*]...], если элемент 1-н то [[*,*,*,*]]
+        z = 0
+        for i in param:
+            z+=1
+            print(f"{z} собственные числа:")
+            for j in self.yakobi(param = i):
+                print(j)
 
+    def write_stability(self,ress,name = "res\\n_\\stability_sost_ravn.txt",chislo = 9):
+        tmp = name[0:6]+f"{chislo}"+name[6:]
+        with open(tmp,"w") as file:
+            for i in range(len(ress)):
+                lam = self.yakobi(param=ress[i]) 
+                g = 1
+                for j in lam:
+                    if j.real < 0:
+                        continue
+                    else:
+                        g = 0
+                        break  
+                if g == 1:
+                    file.write(str(ress[i]) + '\n')
+
+    def write_non_stability(self,ress=[],name="res\\n_\\non_stability_sost_ravn.txt",chislo = 9):
+        tmp = name[0:6]+f"{chislo}"+name[6:]
+        with open(tmp,"w") as file:
+            for i in range(len(ress)):
+                lam = self.yakobi(param = ress[i]) 
+                g = 1
+                for j in lam:
+                    if j.real < 0:
+                        continue
+                    else:
+                        g = 0
+                        break  
+                if g != 1:
+                    file.write(str(ress[i]) + '\n')    
+
+
+#---------------------------------------------------------------------------------------------------------------------
+
+
+
+if __name__ == "__main__":
+    klast = Three_klasters()
+    
+    tmp = klast.razbor_txt(chislo = 9)  #defolt chislo = 9
    
-ress = []
-with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\res\\res_n_9.txt") as file:
-    for line in file:
-        ress.append(razb_str(line.rstrip()))
+    # for i in tmp[0:10]:
+    #     print(i)
 
-
-lam = yakobi(4.71239, 4.71239, 8.0, 0.0, 5.497787143782138)
-print(lam)
-# with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\res\\stability_sost_ravn.txt","w") as file:
-#     for i in range(len(ress)):
-#         lam = yakobi(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4]) 
-#         g = 1
-#         for j in lam:
-#             if j.real < 0:
-#                 continue
-#             else:
-#                 g = 0
-#                 break  
-#         if g == 1:
-#             file.write(str(ress[i]) + '\n')
-
-# with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\res\\non_stability_sost_ravn.txt","w") as file:
-#     for i in range(len(ress)):
-#         lam = yakobi(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4]) 
-#         g = 1
-#         for j in lam:
-#             if j.real < 0:
-#                 continue
-#             else:
-#                 g = 0
-#                 break  
-#         if g != 1:
-#             file.write(str(ress[i]) + '\n')
+    # klast.some_sob_numb(param=tmp[0:10])
+    
+    klast.write_stability(ress= tmp)
 
 
 
-# with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\ust\\res_n_9.txt","w") as file:
-#     for v in ress:
-#         res = func_res(v[0],v[1],v[2],v[3],v[4])
-#         if abs(res[0][0] - res[-1][0]) < 0.1:
-#             file.write(str(v) + "  -  Ust\n")
-#         else:
-#             file.write(str(v) + "  -  Ne ust\n")
+
+

@@ -1,10 +1,4 @@
 
-N = 9
-m = 1
-eps = 0
-
-
-
 def razb_str(str):
     all = []
     tmp = ''
@@ -15,6 +9,6 @@ def razb_str(str):
         if c==',' or c==']':
             all.append(float(tmp))
             tmp = ''
-            continue
+            break
         tmp+=c
     return all
