@@ -4,11 +4,14 @@ from scipy import integrate
 import joblib 
 import matplotlib.pyplot as plt
 from lib import *
+import os
 
+
+os.chdir("three-clusters-of-kuramota")
 
 Marray = np.linspace(0, N-1, N, dtype = 'int')
 Karray = np.linspace(N-1, 0, N, dtype = 'int')
-alarray = np.linspace(0, 2*np.pi, N)
+alarray = np.linspace(0, np.pi, N)
 
 res = []
 t = np.linspace(0, 100, 100)
@@ -24,6 +27,7 @@ def func(p, t, M, K, alpha):
     f[2] = z
     f[3] = w
     return f
+    
 def func_res(x,y,M, K, alpha):
     x0 = x + eps
     y0 = y + eps
@@ -39,13 +43,36 @@ def read_f(name_f):
         arr = file.read()
         print(arr)
         
-res = func_res(6.28319, 6.28319, 8.0, 0.0, 2.356194490192345)  
-plt.plot(t, res[:, 0], label="x")
-plt.plot(t, res[:, 1], label="y", linestyle = '--')
-plt.xlim(0, 100)
-plt.ylim(-10, 20)
-plt.legend()
-plt.show()
+def PlotOnPlane(t, point):
+    res = func_res(point[0], point[1], point[2], point[3], point[4])  #x, y, K, M, alpha
+    plt.plot(t, res[:, 0], label="x")
+    plt.plot(t, res[:, 1], label="y", linestyle = '--')
+    plt.xlim(0, 100)
+    plt.ylim(-10, 20)
+    plt.legend()
+    plt.show() 
+
+def plotandwright(t):
+    os.chdir("res")
+    ress = []
+    with open("res_n_3.txt") as file: #stability_sost_ravn.txt
+        for line in file:
+            ress.append(razb_str(line.rstrip()))
+    os.chdir("ust_graphs")
+    for i in range(21):
+        res = func_res(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4])  
+        plt.plot(t, res[:, 0], label="x")
+        plt.plot(t, res[:, 1], label="y", linestyle = '--')
+        plt.xlim(0, 100)
+        plt.ylim(-10, 20)
+        plt.legend()
+        plt.savefig(f"graph{i+1}")
+        plt.close()
+
+point = (0.0, 0.0, 1.0, 1.0, 0.0)
+PlotOnPlane(t, point)
+
+# plotandwright(t)
 
 
 
@@ -58,4 +85,7 @@ plt.show()
 
 
 
-
+# [1.5708, 1.5708, 8, 0, 3.9269908169872414] /
+# [1.81951, 0.0, 8, 0, 3.9269908169872414] /
+# 0.0, 0.0, 8, 0, 3.9269908169872414 - та точка
+# альфа д.б. до пи

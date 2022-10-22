@@ -1,8 +1,8 @@
 
-N = 9
+N = 3
 m = 1
-eps = 0
-
+eps = 0.7
+omega = 1
 
 
 def razb_str(str):

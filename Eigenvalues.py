@@ -3,6 +3,7 @@ from lib import *
 import numpy as np
 from numpy import linalg as LA
 from Dinamics import *
+os.chdir("res")
 
 def matrix(x, y, K, M, alpha):
     f = []
@@ -22,45 +23,38 @@ def yakobi(x, y, K, M, alpha):
 
    
 ress = []
-with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\res\\res_n_9.txt") as file:
+with open("res_n_3.txt") as file:
     for line in file:
         ress.append(razb_str(line.rstrip()))
 
+with open("lamdas.txt","w") as file:
+    for i in range(len(ress)):
+        lam = yakobi(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4]) 
+        g = 1
+        for j in lam:
+            if round(j.real, 4) < 0:
+                continue
+            else:
+                g = 0
+                break  
+        if g == 1:
+            file.write(str(ress[i]) + " - " + str(lam.real) +'\n')
 
-lam = yakobi(4.71239, 4.71239, 8.0, 0.0, 5.497787143782138)
-print(lam)
-# with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\res\\stability_sost_ravn.txt","w") as file:
-#     for i in range(len(ress)):
-#         lam = yakobi(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4]) 
-#         g = 1
-#         for j in lam:
-#             if j.real < 0:
-#                 continue
-#             else:
-#                 g = 0
-#                 break  
-#         if g == 1:
-#             file.write(str(ress[i]) + '\n')
-
-# with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\res\\non_stability_sost_ravn.txt","w") as file:
-#     for i in range(len(ress)):
-#         lam = yakobi(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4]) 
-#         g = 1
-#         for j in lam:
-#             if j.real < 0:
-#                 continue
-#             else:
-#                 g = 0
-#                 break  
-#         if g != 1:
-#             file.write(str(ress[i]) + '\n')
+with open("stability_sost_ravn.txt","w") as file:
+    for i in range(len(ress)):
+        lam = yakobi(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4]) 
+        g = 1
+        for j in lam:
+            if round(j.real, 4) < 0:
+                continue
+            else:
+                g = 0
+                break  
+        if g == 1:
+            file.write(str(ress[i]) + '\n')
 
 
 
-# with open("C:\\Users\\nedos\\Desktop\\scientific work\\three-clusters-of-kuramota\\ust\\res_n_9.txt","w") as file:
-#     for v in ress:
-#         res = func_res(v[0],v[1],v[2],v[3],v[4])
-#         if abs(res[0][0] - res[-1][0]) < 0.1:
-#             file.write(str(v) + "  -  Ust\n")
-#         else:
-#             file.write(str(v) + "  -  Ne ust\n")
+
+
+#интересный случай - 4.71239, 4.71239, 8.0, 0.0, 5.497787143782138
