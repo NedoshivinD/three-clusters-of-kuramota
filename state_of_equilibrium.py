@@ -35,6 +35,7 @@ Karray = np.linspace(N-1, 1, N-1, dtype = 'int')
 alarray = np.linspace(0, np.pi-0.000001, N)
 res = joblib.Parallel(n_jobs = Nstream) (joblib.delayed(res_sist) (M, K, alpha) for M in Marray for K in Karray for alpha in alarray if (M+K<N))
 name = "res_n_3.txt"
+print(len(res))
 with open(name,"w",encoding="utf-8") as file:
     for x in res:
         for i in x:

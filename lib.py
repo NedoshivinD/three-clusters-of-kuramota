@@ -1,7 +1,7 @@
 
 N = 3
 m = 1
-eps = 0.7
+eps = 0.5
 omega = 1
 
 

@@ -11,8 +11,8 @@ def matrix(x, y, K, M, alpha):
     f.append([0, 0, 0, 1])
     f.append([1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(x - alpha) - (N - M - K)*np.cos(x-y-alpha)),
             1/(N*m)*(-(N-M-K)*np.cos(y + alpha) + (N-M-K)*np.cos(x-y-alpha)), -1/m, 0])
-    f.append([1/(N*m)*(-M*np.cos(x+y) + M*np.cos(y-x-alpha)),
-            1/(N*m)*(-M*np.cos(x+y)-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha)),
+    f.append([1/(N*m)*(-M*np.cos(x+alpha) + M*np.cos(y-x-alpha)),
+            1/(N*m)*(-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha)),
             0, -1/m])
     return(f)
 
@@ -30,15 +30,7 @@ with open("res_n_3.txt") as file:
 with open("lamdas.txt","w") as file:
     for i in range(len(ress)):
         lam = yakobi(ress[i][0], ress[i][1], ress[i][2], ress[i][3], ress[i][4]) 
-        g = 1
-        for j in lam:
-            if round(j.real, 4) < 0:
-                continue
-            else:
-                g = 0
-                break  
-        if g == 1:
-            file.write(str(ress[i]) + " - " + str(lam.real) +'\n')
+        file.write(str(ress[i]) + " - " + str(lam.real) +'\n')
 
 with open("stability_sost_ravn.txt","w") as file:
     for i in range(len(ress)):

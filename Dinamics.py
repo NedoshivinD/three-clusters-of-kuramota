@@ -22,8 +22,8 @@ def func(p, t, M, K, alpha):
     y = p[1]
     z = p[2]
     w = p[3]
-    f[0] = 1/(N*m)*((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha) - z)
-    f[1] = 1/(N*m)*((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-(M)*np.sin(y-x-alpha) - z)
+    f[0] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - z)
+    f[1] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-(M)*np.sin(y-x-alpha)) - w)
     f[2] = z
     f[3] = w
     return f
@@ -69,7 +69,7 @@ def plotandwright(t):
         plt.savefig(f"graph{i+1}")
         plt.close()
 
-point = (0.0, 0.0, 1.0, 1.0, 0.0)
+point = (4.18879, 2.0944, 1.0, 1.0, 1.5707958267948965)
 PlotOnPlane(t, point)
 
 # plotandwright(t)
