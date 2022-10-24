@@ -81,13 +81,14 @@ class Three_klasters(object):
 
 if __name__ == "__main__":
     klast = Three_klasters()
-    
-    tmp = klast.razbor_txt(chislo = 9)  #defolt chislo = 9
+    N=3
+    m=1
+    tmp = klast.razbor_txt(chislo = 3)  #defolt chislo = 9
    
     # for i in tmp[0:10]:
     #     print(i)
 
-    # klast.some_sob_numb(param=tmp[0:10])
+    klast.some_sob_numb(param=[np.pi, np.pi, 1, 1, np.pi])
     
     klast.write_stability(ress= tmp)
 
