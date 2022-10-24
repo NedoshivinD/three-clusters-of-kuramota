@@ -15,23 +15,9 @@ col_razb = 10
 MAX_GRAPH = 50
 eps = 0.2
 
-def razb_str(str):
-    all = []
-    tmp = ''
 
-    for c in str:
-        if c==' ' or c=='[':
-            continue
-        if c==',' or c==']':
-            all.append(float(tmp))
-            tmp = ''
-            if c==']':
-                break
-            continue
-        tmp+=c
-    return all
 
-class Tree_klasters(object):
+class Equilibrium_states(object):
     
     #инициализация системы
     def __init__(self,p = [3,1]):
@@ -57,7 +43,7 @@ class Tree_klasters(object):
         # x with 1 dot
         f[0] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
         # y with 1 dot
-        f[1] = 1/m*(1/N * ((N+M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-(M)*np.sin(y-x-alpha)) - w)
+        f[1] = 1/m*(1/N * ((N+M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         # x with 2 dots
         f[2] = v
         # y with 2 dots
@@ -255,7 +241,7 @@ class Tree_klasters(object):
         ress = []
         with open(name) as file:
             for line in file:
-                ress.append(razb_str(line.rstrip()))
+                ress.append(self.razb_str(line.rstrip()))
         return ress
         
     def change_N(self,N_):
@@ -265,10 +251,26 @@ class Tree_klasters(object):
         if not os.path.exists(way):
             os.makedirs(way)
 
+    def razb_str(self, str):
+        all = []
+        tmp = ''
+
+        for c in str:
+            if c==' ' or c=='[':
+                continue
+            if c==',' or c==']':
+                all.append(float(tmp))
+                tmp = ''
+                if c==']':
+                    break
+                continue
+            tmp+=c
+        return all
+
 if __name__ == "__main__":
     tmp = [4,1]
-    tk = Tree_klasters(p = tmp)
+    es = Equilibrium_states(p = tmp)
     # tk.dinamic(params=[1.047197551196596, 5.23598775598299, 1, 1, 2.0943951023931953])
     # tk.parall_st_eq() #подсчет всех состояний
-    tk.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.show_sost(key='r_o') #сохранение графиков #ключевые слов "all", "st", "un_st"
 #govno v 20,30  
