@@ -137,23 +137,32 @@ class Tree_klasters(object):
     #Сохранение устойчивых и неустойчивых состояний равновесия 
     def rec_st_and_unst_st_eq(self):
         name_s = f"new_life\\res\\n_{self.N}\\stable_{self.N}.txt"
-        name_n = f"new_life\\res\\n_{self.N}\\non_stable_{self.N}.txt" 
+        name_n = f"new_life\\res\\n_{self.N}\\non_stable_{self.N}.txt"
+        name_o = f"new_life\\res\\n_{self.N}\\range_zero_{self.N}.txt" 
         self.create_path(name_s[:17])
         self.create_path(name_n[:17])          
         with open(name_s,"w",encoding="utf-8") as file_s: 
-            with open(name_n,"w",encoding="utf-8") as file_n: 
-                for i in self.sost:
-                    for j in i:
-                        tmp = self.eigenvalues(j)
-                        z = 0
-                        for l in tmp.real:
-                            if l < 0:
-                                z+=1
-                        text = str(j)+'\t'+str(tmp.real)+'\n' 
-                        if z == 4:
-                            file_s.write(text)
-                        else:
-                            file_n.write(text)
+            with open(name_n,"w",encoding="utf-8") as file_n:
+                with open(name_o,"w",encoding="utf-8") as file_o: 
+                    for i in self.sost:
+                        for j in i:
+                            tmp = self.eigenvalues(j)
+                            z = 0
+                            o = 0
+                            for l in tmp.real:
+                                if  l>-0.0005 and l<0.0005:
+                                    o = 1
+                                    break 
+                                
+                                if l < 0:
+                                    z+=1
+                            text = str(j)+'\t'+str(tmp.real)+'\n' 
+                            if z == 4 and o == 0:
+                                file_s.write(text)
+                            elif o==1:
+                                file_o.write(text)
+                            else:
+                                file_n.write(text)
     
     #динамика для одной точки
     def dinamic(self,params = [2.094395, 4.18879, 1, 1, 2.0943951023931953]):
@@ -198,9 +207,15 @@ class Tree_klasters(object):
         elif key == "un_st":
             name = name + "non_stable_.txt"
             way = way+"unstable\\"
-        else :
+        elif key == "r_o":
+            name = name + "range_zero_.txt"
+            way = way+"range_zero\\"
+        elif key == "all":
             name = name + "res_n_.txt"
             way = way+"all\\"
+        else:
+            print("wrong key")
+            return
             
         sdvig1 = -4 
         sdvig2 = 15
@@ -255,5 +270,5 @@ if __name__ == "__main__":
     tk = Tree_klasters(p = tmp)
     # tk.dinamic(params=[1.047197551196596, 5.23598775598299, 1, 1, 2.0943951023931953])
     # tk.parall_st_eq() #подсчет всех состояний
-    tk.show_sost(key='st') #сохранение графиков
+    tk.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
 #govno v 20,30  
