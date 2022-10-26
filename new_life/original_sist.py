@@ -103,7 +103,7 @@ class Original_sist(object):
             way = way+"stable\\"
         elif key == "un_st":
             way = way+"unstable\\"
-        elif key == "r_o":
+        elif key == "rz":
             way = way+"range_zero\\"
         elif key == "all":
             way = way+"all\\"
@@ -140,6 +140,8 @@ class Original_sist(object):
             name = name + "non_stable_.txt"
         elif key == "all":
             name = name + "res_n_.txt"
+        elif key == "rz":
+            name = name + "range_zero_.txt"
         else:
             print("wrong key")
             return
@@ -208,8 +210,8 @@ class Original_sist(object):
 if __name__ == "__main__":
     tmp = [4,1, 1]
     ors = Original_sist(p = tmp)
-    ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    # ors.sost_in_fi(key='st')
+    # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
+    ors.sost_in_fi(key='un_st')
     
 
 
