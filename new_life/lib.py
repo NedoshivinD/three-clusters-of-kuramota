@@ -206,10 +206,12 @@ class Equilibrium_states(object):
         sdvig1 = -4 
         sdvig2 = 15
         
+        way_or = 'zamena\\'
+        
         name = name[0:sdvig1]+f"{n}"+name[sdvig1:]
         name = name[0:sdvig2]+f"{n}"+name[sdvig2:]
         # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
-        way = way[0:sdvig2]+f"{n}"+way[sdvig2:]
+        way = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_or
 
         self.create_path(way)
         self.clean_path(way)
@@ -270,7 +272,7 @@ class Equilibrium_states(object):
 if __name__ == "__main__":
     tmp = [4,1]
     es = Equilibrium_states(p = tmp)
-    es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
+    # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     # es.parall_st_eq() #подсчет всех состояний
-    # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
-#govno v 20,30  
+    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+  

@@ -56,19 +56,20 @@ class Original_sist(object):
         return f
     
     #динамика для одной точки
-    def dinamic(self,params = [np.pi, np.pi, np.pi,1, 1, np.pi/3]):
+    def dinamic(self,params = [np.pi, np.pi, 1, 1, np.pi/3]):
+        tmp = self.anti_zamena(arr=params)
         start_point=np.zeros(6)
-        start_point[0],start_point[1], start_point[2],self.M,self.K,self.alpha = params 
+        start_point[0],start_point[1], start_point[2],self.M,self.K,self.alpha = tmp[0] 
         start_point[0] = start_point[0]+eps
         start_point[1] = start_point[1]+eps
         start_point[2] = start_point[2]+eps
         
         tmp = integrate.odeint(self.syst, start_point, self.t)
-        plt.plot(self.t,tmp[:,0],label="fi1")
-        plt.plot(self.t,tmp[:,1],label="fi2", linestyle = '--')
-        plt.plot(self.t,tmp[:,2],label="fi3", linestyle = '-.')
-        plt.xlim(0, 100)
-        plt.ylim(0, 100)
+        plt.plot(self.t,tmp[:,0] - tmp[:,0],label="fi1")
+        plt.plot(self.t,tmp[:,1] - tmp[:,0],label="fi2", linestyle = '--')
+        plt.plot(self.t,tmp[:,2] - tmp[:,0],label="fi3", linestyle = '-.')
+        # plt.xlim(0, 100)
+        # plt.ylim(0, 100)
         plt.legend()
         plt.show()
     
@@ -99,27 +100,22 @@ class Original_sist(object):
         way = name
         
         if key == 'st':
-            name = name+"stable_.txt"
             way = way+"stable\\"
         elif key == "un_st":
-            name = name + "non_stable_.txt"
             way = way+"unstable\\"
         elif key == "r_o":
-            name = name + "range_zero_.txt"
             way = way+"range_zero\\"
         elif key == "all":
-            name = name + "res_n_.txt"
             way = way+"all\\"
         else:
             print("wrong key")
             return
             
-        sdvig1 = -4 
+        # sdvig1 = -4 
         sdvig2 = 15
         way_or = 'origin\\'
         
-        name = name[0:sdvig1]+f"{n}"+name[sdvig1:]
-        name = name[0:sdvig2]+f"{n}"+name[sdvig2:]
+
         # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
         way = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_or
 
@@ -212,9 +208,9 @@ class Original_sist(object):
 if __name__ == "__main__":
     tmp = [4,1, 1]
     ors = Original_sist(p = tmp)
-    ors.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
+    ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
     # ors.sost_in_fi(key='st')
-    # ors.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    
 
 
     # np.angel(fin - fi0)
