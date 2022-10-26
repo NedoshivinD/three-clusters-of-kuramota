@@ -13,7 +13,7 @@ import os, shutil
 N_JOB = 4
 col_razb = 10
 MAX_GRAPH = 50
-eps = 0.2
+eps = 1
 
 
 
@@ -270,7 +270,7 @@ class Equilibrium_states(object):
 if __name__ == "__main__":
     tmp = [4,1]
     es = Equilibrium_states(p = tmp)
-    # tk.dinamic(params=[1.047197551196596, 5.23598775598299, 1, 1, 2.0943951023931953])
-    # tk.parall_st_eq() #подсчет всех состояний
-    es.show_sost(key='r_o') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
+    # es.parall_st_eq() #подсчет всех состояний
+    # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
 #govno v 20,30  

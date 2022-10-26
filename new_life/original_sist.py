@@ -12,7 +12,7 @@ import os, shutil
 
 col_razb = 10
 MAX_GRAPH = 50
-eps = 0.2
+eps = 0.3
 
 
 class Original_sist(object):
@@ -68,7 +68,7 @@ class Original_sist(object):
         plt.plot(self.t,tmp[:,1],label="fi2", linestyle = '--')
         plt.plot(self.t,tmp[:,2],label="fi3", linestyle = '-.')
         plt.xlim(0, 100)
-        plt.ylim(-10, 20)
+        plt.ylim(0, 100)
         plt.legend()
         plt.show()
     
@@ -80,11 +80,13 @@ class Original_sist(object):
         start_point[1] += eps
         start_point[2] += eps
         tmp = integrate.odeint(self.syst, start_point, self.t)
-        plt.plot(self.t,tmp[:,0],label="fi1")
-        plt.plot(self.t,tmp[:,1],label="fi2", linestyle = '--')
-        plt.plot(self.t,tmp[:,2],label="fi3", linestyle = '-.')
-        plt.xlim(0, 100)
-        plt.ylim(-10, 20)
+        # for x in tmp:
+        #     x[0] = np.sin()
+        plt.plot(self.t,tmp[:,0] - tmp[:,0],label="fi1")
+        plt.plot(self.t,tmp[:,1] - tmp[:,0],label="fi2", linestyle = '--')
+        plt.plot(self.t,tmp[:,2] - tmp[:,0],label="fi3", linestyle = '-.')
+        # plt.xlim(0, 100)
+        # plt.ylim(0, 1)
         plt.legend()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
@@ -210,7 +212,12 @@ class Original_sist(object):
 if __name__ == "__main__":
     tmp = [4,1, 1]
     ors = Original_sist(p = tmp)
-    # ors.dinamic()
-    ors.sost_in_fi(key='un_st')
-    # ors.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
-#govno v 20,30  
+    ors.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
+    # ors.sost_in_fi(key='st')
+    # ors.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+
+
+    # np.angel(fin - fi0)
+    # параметр порядка
+
+    # посмотреть 2х кластерное разбиение но со второй гармоникой
