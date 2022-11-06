@@ -7,12 +7,11 @@ import joblib
 from numpy import linalg as LA
 import os, shutil
 
-
 #Параметры системы 
 
 col_razb = 10
 MAX_GRAPH = 50
-eps = 0.3
+eps = 0
 
 
 class Original_sist(object):
@@ -56,7 +55,7 @@ class Original_sist(object):
         return f
     
     #динамика для одной точки
-    def dinamic(self,params = [np.pi, np.pi, 1, 1, np.pi/3]):
+    def dinamic(self, params = [np.pi, np.pi, 1, 1, np.pi/3]):
         tmp = self.anti_zamena(arr=params)
         start_point=np.zeros(6)
         start_point[0],start_point[1], start_point[2],self.M,self.K,self.alpha = tmp[0] 
@@ -91,6 +90,15 @@ class Original_sist(object):
         plt.legend()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
+        return tmp
+
+    def rec_dinamic_par(self, way, z, arr):
+        R1 = self.order_parameter(arr)
+        plt.plot(self.t, R1)
+        # plt.xlim(0, 100)
+        # plt.ylim(0, 1)
+        plt.savefig(way + f'graph_{z}.png')
+        plt.clf()
 
     #показываем графики, но выбираем какие и отдельно в папочки
     #ключевые слов "all", "st", "un_st"
@@ -114,13 +122,15 @@ class Original_sist(object):
         # sdvig1 = -4 
         sdvig2 = 15
         way_or = 'origin\\'
-        
+        way_par = 'order_params\\'
 
         # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
+        way_p = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_par
         way = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_or
-
         self.create_path(way)
         self.clean_path(way)
+        self.create_path(way_p)
+        self.clean_path(way_p)
         # print(way)
                 
         rang = len(arr)
@@ -128,8 +138,9 @@ class Original_sist(object):
             rang = MAX_GRAPH
             
         for i in range(rang):
-            self.rec_dinamic(params = arr[i],way = way,z=i+1)
-
+            tmp = self.rec_dinamic(params = arr[i],way = way,z=i+1)
+            self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp)
+             
     def sost_in_fi(self, key = 'all'):
         n = self.N
         name = "new_life\\res\\n_\\"
@@ -150,12 +161,19 @@ class Original_sist(object):
         
         name = name[0:sdvig1]+f"{n}"+name[sdvig1:]
         name = name[0:sdvig2]+f"{n}"+name[sdvig2:]
-        # print(name)
+
         res = self.razbor_txt(name)
         res_fi = self.anti_zamena(res)
+
+
+
         self.show_sost(arr = res_fi, key=key)
+        # ress = self.order_parameter(res_fi)
+        # self.show_sost(arr = ress, key=key)
 
-
+    # просто рисовалка) 
+    # def PlotOnPlane(self, arr):
+    #     plt.plot()
     def anti_zamena(self, arr):
         ress = []
         fi1 = self.fi1
@@ -206,6 +224,19 @@ class Original_sist(object):
                 continue
             tmp+=c
         return all
+
+    def order_parameter(self, arr):
+        res = []
+        for x in arr:
+            sumr = 0
+            sumi = 0
+            for i in range(3):
+                tmp = np.exp(x[i]*1j)
+                sumr += tmp.real
+                sumi += tmp.imag
+            sum = 1/3 * np.sqrt(sumr ** 2 + sumi ** 2)
+            res.append(sum)
+        return res
 
 if __name__ == "__main__":
     tmp = [4,1, 1]

@@ -13,7 +13,7 @@ import os, shutil
 N_JOB = 4
 col_razb = 10
 MAX_GRAPH = 50
-eps = 1
+eps = 0
 
 
 
