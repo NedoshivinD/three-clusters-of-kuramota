@@ -11,7 +11,7 @@ import os, shutil
 
 col_razb = 10
 MAX_GRAPH = 50
-eps = 0
+eps = 0.1
 
 
 class Original_sist(object):
@@ -96,7 +96,7 @@ class Original_sist(object):
         R1 = self.order_parameter(arr)
         plt.plot(self.t, R1)
         # plt.xlim(0, 100)
-        # plt.ylim(0, 1)
+        plt.ylim(0, 1.1)
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
 
@@ -164,7 +164,6 @@ class Original_sist(object):
 
         res = self.razbor_txt(name)
         res_fi = self.anti_zamena(res)
-
 
 
         self.show_sost(arr = res_fi, key=key)
@@ -239,7 +238,7 @@ class Original_sist(object):
         return res
 
 if __name__ == "__main__":
-    tmp = [4,1, 1]
+    tmp = [4,1, 0]
     ors = Original_sist(p = tmp)
     # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
     ors.sost_in_fi(key='un_st')
