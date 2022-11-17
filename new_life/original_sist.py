@@ -239,7 +239,7 @@ class Original_sist(object):
 
 if __name__ == "__main__":
     tmp = [4,1, 0]
-    ors = Original_sist(p = tmp)
+    ors = Original_sist(p = tmp, fi = 1)
     # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
     ors.sost_in_fi(key='un_st')
     
