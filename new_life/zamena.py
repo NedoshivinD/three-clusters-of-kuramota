@@ -252,6 +252,7 @@ class Equilibrium_states(object):
     def create_path(self, way):
         if not os.path.exists(way):
             os.makedirs(way)
+            
 
     def razb_str(self, str):
         all = []
