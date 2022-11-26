@@ -23,6 +23,7 @@ class Original_sist(object):
         self.K = 0
         self.alpha = 0
         self.fi1 = fi
+        self.N_fi1 = 10
         self.sost = []
         self.ust = []
         self.un_ust = []
@@ -100,9 +101,31 @@ class Original_sist(object):
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
 
+    def rec_dinamic_map(self, way, z, params, res):
+        start_point=np.zeros(6)
+        start_point[0],start_point[1],start_point[2], self.M,self.K,self.alpha = params
+        x = res[0]
+        y = res[1] 
+        start_point[0] += eps
+        start_point[1] += eps
+        start_point[2] += eps
+        fi1_arr = np.linspace(0, 2*np.pi, self.N_fi1)
+        for i in range(self.N_fi1):
+            start_point[0] = fi1_arr[i]
+            new_points = self.anti_zamena_2([start_point[0],x,y, start_point[3],start_point[4],start_point[5]])
+            tmp = integrate.odeint(self.syst, new_points, self.t)
+            plt.plot(self.t,np.sin(tmp[:,0]),label="fi1", c='r', alpha = 0.5)
+            plt.plot(self.t,np.sin(tmp[:,1]),label="fi2", c='b', alpha = 0.5)
+            plt.plot(self.t,np.sin(tmp[:,2]),label="fi3", c='g', alpha = 0.5)
+            # plt.xlim(0, 100)
+            # plt.ylim(0, 1)
+        # plt.legend()
+        plt.savefig(way + f'graph_{z}.png')
+        plt.clf()
+        
     #показываем графики, но выбираем какие и отдельно в папочки
     #ключевые слов "all", "st", "un_st"
-    def show_sost(self,arr, key = 'all'):
+    def show_sost(self,arr, key, res):
         n = self.N
         name = "new_life\\res\\n_\\"
         way = name
@@ -123,14 +146,19 @@ class Original_sist(object):
         sdvig2 = 15
         way_or = 'origin\\'
         way_par = 'order_params\\'
+        way_map = 'map\\'
 
         # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
+        way_m = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_map
         way_p = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_par
         way = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_or
+        
         self.create_path(way)
         self.clean_path(way)
         self.create_path(way_p)
         self.clean_path(way_p)
+        self.create_path(way_m)
+        self.clean_path(way_m)
         # print(way)
                 
         rang = len(arr)
@@ -140,6 +168,7 @@ class Original_sist(object):
         for i in range(rang):
             tmp = self.rec_dinamic(params = arr[i],way = way,z=i+1)
             self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp)
+            self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
              
     def sost_in_fi(self, key = 'all'):
         n = self.N
@@ -166,7 +195,7 @@ class Original_sist(object):
         res_fi = self.anti_zamena(res)
 
 
-        self.show_sost(arr = res_fi, key=key)
+        self.show_sost(arr = res_fi, key=key, res = res)
         # ress = self.order_parameter(res_fi)
         # self.show_sost(arr = ress, key=key)
 
@@ -180,6 +209,14 @@ class Original_sist(object):
             fi2 = fi1 - x[0]
             fi3 = fi1 - x[1]
             ress.append([fi1, fi2, fi3, x[2], x[3], x[4]])
+        return ress
+    
+    def anti_zamena_2(self, arr):
+        ress = []
+        fi1 = arr[0]
+        fi2 = fi1 - arr[1]
+        fi3 = fi1 - arr[2]
+        ress = [fi1, fi2, fi3, arr[3], arr[4], arr[5]]
         return ress
                 
     # чистим папку
@@ -238,7 +275,7 @@ class Original_sist(object):
         return res
 
 if __name__ == "__main__":
-    tmp = [4,1, 0]
+    tmp = [4,np.pi, 0]
     ors = Original_sist(p = tmp, fi = 1)
     # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
     ors.sost_in_fi(key='un_st')

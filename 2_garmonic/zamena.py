@@ -15,8 +15,6 @@ col_razb = 10
 MAX_GRAPH = 50
 eps = 0.1
 
-
-
 class Equilibrium_states(object):
     
     #инициализация системы
