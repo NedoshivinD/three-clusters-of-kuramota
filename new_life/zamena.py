@@ -43,7 +43,7 @@ class Equilibrium_states(object):
         # x with 1 dot
         f[0] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
         # y with 1 dot
-        f[1] = 1/m*(1/N * ((N+M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
+        f[1] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         # x with 2 dots
         f[2] = v
         # y with 2 dots
@@ -275,5 +275,5 @@ if __name__ == "__main__":
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     # es.parall_st_eq() #подсчет всех состояний
-    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   

@@ -114,9 +114,10 @@ class Original_sist(object):
             start_point[0] = fi1_arr[i]
             new_points = self.anti_zamena_2([start_point[0],x,y, start_point[3],start_point[4],start_point[5]])
             tmp = integrate.odeint(self.syst, new_points, self.t)
-            plt.plot(self.t,np.sin(tmp[:,0]),label="fi1", c='r', alpha = 0.5)
-            plt.plot(self.t,np.sin(tmp[:,1]),label="fi2", c='b', alpha = 0.5)
-            plt.plot(self.t,np.sin(tmp[:,2]),label="fi3", c='g', alpha = 0.5)
+            c = tmp[:,0] - tmp[:,1]# - tmp[:,0]
+            plt.plot(self.t,tmp[:,0],label="fi1", c='r', alpha = 0.5)
+            plt.plot(self.t,tmp[:,1],label="fi2", c='b', alpha = 0.5)
+            plt.plot(self.t,tmp[:,2],label="fi3", c='g', alpha = 0.5)
             # plt.xlim(0, 100)
             # plt.ylim(0, 1)
         # plt.legend()
@@ -212,7 +213,6 @@ class Original_sist(object):
         return ress
     
     def anti_zamena_2(self, arr):
-        ress = []
         fi1 = arr[0]
         fi2 = fi1 - arr[1]
         fi3 = fi1 - arr[2]
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     tmp = [4,np.pi, 0]
     ors = Original_sist(p = tmp, fi = 1)
     # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    ors.sost_in_fi(key='un_st')
+    ors.sost_in_fi(key='st')
     
 
 

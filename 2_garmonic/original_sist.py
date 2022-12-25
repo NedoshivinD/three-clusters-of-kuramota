@@ -99,7 +99,7 @@ class Original_sist(object):
 
     #показываем графики, но выбираем какие и отдельно в папочки
     #ключевые слов "all", "st", "un_st"
-    def show_sost(self,arr, key = 'all'):
+    def show_sost(self,arr, key, res):
         n = self.N
         name = "2_garmonic\\res\\n_\\"
         way = name
@@ -120,7 +120,9 @@ class Original_sist(object):
         sdvig2 = 17
         way_or = 'origin\\'
         way_par = 'order_params\\'
+        way_map = 'map\\'
 
+        way_m = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_map
         # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
         way_p = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_par
         way = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_or
@@ -128,6 +130,8 @@ class Original_sist(object):
         self.clean_path(way)
         self.create_path(way_p)
         self.clean_path(way_p)
+        self.create_path(way_m)
+        self.clean_path(way_m)
         # print(way)
                 
         rang = len(arr)
@@ -137,7 +141,9 @@ class Original_sist(object):
         for i in range(rang):
             tmp = self.rec_dinamic(params = arr[i],way = way,z=i+1)
             self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp)
-             
+            self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
+    
+    
     def sost_in_fi(self, key = 'all'):
         n = self.N
         name = "2_garmonic\\res\\n_\\"
@@ -163,7 +169,7 @@ class Original_sist(object):
         res_fi = self.anti_zamena(res)
 
 
-        self.show_sost(arr = res_fi, key=key)
+        self.show_sost(arr = res_fi, key=key, res =res)
         # ress = self.order_parameter(res_fi)
         # self.show_sost(arr = ress, key=key)
 
