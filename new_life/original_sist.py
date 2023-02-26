@@ -10,7 +10,7 @@ import os, shutil
 #Параметры системы 
 
 col_razb = 10
-MAX_GRAPH = 50
+MAX_GRAPH = 100
 eps = 0.1
 
 
@@ -55,6 +55,63 @@ class Original_sist(object):
         
         return f
     
+    #матрица Якоби
+    def jakobi(self, param):
+        tmp = self.anti_zamena_2(arr=param)
+
+        fi1,fi2,fi3,M,K,alpha = tmp
+        N = self.N
+        m = self.m
+        f = np.zeros(shape=(6,6))
+        f[0]=[0, 0, 0, 1.0, 0, 0]
+        f[1]=[0, 0, 0, 0, 1.0, 0]
+        f[2]=[0, 0, 0, 0, 0, 1.0]
+        f[3]=[1/m*(1/N * (-M*np.cos(fi2 - fi1 + alpha) - (N-M-K)*np.cos(fi3 - fi1 + alpha))),
+            1/m*(1/N * (M*np.cos(fi2 - fi1 + alpha))),
+            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi1 + alpha))),
+            -1/m,
+            0,
+            0]
+        f[4]=[1/m*(1/N * (K*np.cos(fi1 - fi2 + alpha))),
+            1/m*(1/N * (- K*np.cos(fi1 - fi2 + alpha) - (N-M-K)*np.cos(fi3 - fi2 + alpha))),
+            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi2 + alpha))),
+            0, 
+            -1/m, 
+            0]
+        f[5]=[1/m*(1/N * (K*np.cos(fi1 - fi3 + alpha))),
+            1/m*(1/N * (M*np.cos(fi2 - fi3 + alpha))),
+            1/m*( 1/N * (-K*np.cos(fi1 - fi3 + alpha) - M*np.cos(fi2 - fi3 + alpha))),
+            0, 
+            0, 
+            -1/m]
+        return f
+    #якобиан
+    def eigenvalues(self,param):
+        matrix = self.jakobi(param)
+        lam, vect = LA.eig(matrix)
+        return lam
+    
+    def check_lams(self, params):
+        lam = self.eigenvalues(params)
+        count_st = 0
+        count_unst = 0
+        count_rz = 0
+        for l in lam.real:
+            if l < 0:
+                count_st+=1
+            if l > 0:
+                count_unst+=1
+            if l == 0:
+                count_rz+=1
+        if count_st == 6:
+            key = 'st'
+        if count_st != 6 and count_rz==0:
+            key = 'un_st'
+        if count_rz!=0 and count_st == 0 and count_unst == 0:
+            key = 'rz'
+        # print("Lamdas: ", lam, " Params: ", params, " key: ", key)
+        return key
+
     #динамика для одной точки
     def dinamic(self, params = [np.pi, np.pi, 1, 1, np.pi/3]):
         tmp = self.anti_zamena(arr=params)
@@ -72,6 +129,7 @@ class Original_sist(object):
         # plt.ylim(0, 100)
         plt.legend()
         plt.show()
+        
     
     #динамика, но сохраняем
     def rec_dinamic(self,way,z=1,params = [1, 2.094395, 4.18879, 1, 1, 2.0943951023931953]):
@@ -114,23 +172,22 @@ class Original_sist(object):
             start_point[0] = fi1_arr[i]
             new_points = self.anti_zamena_2([start_point[0],x,y, start_point[3],start_point[4],start_point[5]])
             tmp = integrate.odeint(self.syst, new_points, self.t)
-            c = tmp[:,0] - tmp[:,1]# - tmp[:,0]
+            # c = tmp[:,0] - tmp[:,1]# - tmp[:,0]
             plt.plot(self.t,tmp[:,0],label="fi1", c='r', alpha = 0.5)
             plt.plot(self.t,tmp[:,1],label="fi2", c='b', alpha = 0.5)
             plt.plot(self.t,tmp[:,2],label="fi3", c='g', alpha = 0.5)
             # plt.xlim(0, 100)
             # plt.ylim(0, 1)
+        plt.show()
         # plt.legend()
-        plt.savefig(way + f'graph_{z}.png')
-        plt.clf()
+        # if way == 'new_life\\res\\n_4\\unstable\\map\\' and z == 2:
+        #     plt.show()
+
+        # print("Way: ", way, " z: ", z)
+        # plt.savefig(way + f'graph_{z}.png')
+        # plt.clf()
         
-    #показываем графики, но выбираем какие и отдельно в папочки
-    #ключевые слов "all", "st", "un_st"
-    def show_sost(self,arr, key, res):
-        n = self.N
-        name = "new_life\\res\\n_\\"
-        way = name
-        
+    def new_way(self, way, key):
         if key == 'st':
             way = way+"stable\\"
         elif key == "un_st":
@@ -142,34 +199,98 @@ class Original_sist(object):
         else:
             print("wrong key")
             return
-            
-        # sdvig1 = -4 
+        return way
+
+    #показываем графики, но выбираем какие и отдельно в папочки
+    #ключевые слов "all", "st", "un_st"
+    def show_sost(self,arr, key, res):
+        n = self.N
+        name = "new_life\\res\\n_\\"
+        way = name
+        rang = len(arr)
+        if rang > MAX_GRAPH:
+            rang = MAX_GRAPH
+        
+        way1 = way+"stable\\"
+        way2 = way+"unstable\\"
+        way3 = way+"range_zero\\"
+        way4 = way+"all\\"
         sdvig2 = 15
         way_or = 'origin\\'
         way_par = 'order_params\\'
         way_map = 'map\\'
 
-        # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
-        way_m = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_map
-        way_p = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_par
-        way = way[0:sdvig2]+f"{n}"+way[sdvig2:] + way_or
-        
-        self.create_path(way)
-        self.clean_path(way)
-        self.create_path(way_p)
-        self.clean_path(way_p)
-        self.create_path(way_m)
-        self.clean_path(way_m)
-        # print(way)
-                
-        rang = len(arr)
-        if rang > MAX_GRAPH:
-            rang = MAX_GRAPH
-            
+        way_m1 = way1[0:sdvig2]+f"{n}"+way1[sdvig2:] + way_map
+        way_p1 = way1[0:sdvig2]+f"{n}"+way1[sdvig2:] + way_par
+        way1 = way1[0:sdvig2]+f"{n}"+way1[sdvig2:] + way_or
+        self.create_path(way1)
+        self.clean_path(way1)
+        self.create_path(way_p1)
+        self.clean_path(way_p1)
+        self.create_path(way_m1)
+        self.clean_path(way_m1)
+
+        way_m2 = way2[0:sdvig2]+f"{n}"+way2[sdvig2:] + way_map
+        way_p2 = way2[0:sdvig2]+f"{n}"+way2[sdvig2:] + way_par
+        way2 = way2[0:sdvig2]+f"{n}"+way2[sdvig2:] + way_or
+        self.create_path(way2)
+        self.clean_path(way2)
+        self.create_path(way_p2)
+        self.clean_path(way_p2)
+        self.create_path(way_m2)
+        self.clean_path(way_m2)
+
+        way_m3 = way3[0:sdvig2]+f"{n}"+way3[sdvig2:] + way_map
+        way_p3 = way3[0:sdvig2]+f"{n}"+way3[sdvig2:] + way_par
+        way3 = way3[0:sdvig2]+f"{n}"+way3[sdvig2:] + way_or
+        self.create_path(way3)
+        self.clean_path(way3)
+        self.create_path(way_p3)
+        self.clean_path(way_p3)
+        self.create_path(way_m3)
+        self.clean_path(way_m3)
+
+        way_m4 = way4[0:sdvig2]+f"{n}"+way4[sdvig2:] + way_map
+        way_p4 = way4[0:sdvig2]+f"{n}"+way4[sdvig2:] + way_par
+        way4 = way4[0:sdvig2]+f"{n}"+way4[sdvig2:] + way_or
+        self.create_path(way4)
+        self.clean_path(way4)
+        self.create_path(way_p4)
+        self.clean_path(way_p4)
+        self.create_path(way_m4)
+        self.clean_path(way_m4)
+
         for i in range(rang):
-            tmp = self.rec_dinamic(params = arr[i],way = way,z=i+1)
+            key = self.check_lams(arr[i])
+            way_n = self.new_way(way, key)   
+            # sdvig1 = -4 
+            sdvig2 = 15
+            way_or = 'origin\\'
+            way_par = 'order_params\\'
+            way_map = 'map\\'
+
+            # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
+            way_m = way_n[0:sdvig2]+f"{n}" + way_n[sdvig2:] + way_map
+            way_p = way_n[0:sdvig2]+f"{n}" + way_n[sdvig2:] + way_par
+            way_k = way_n[0:sdvig2]+f"{n}" + way_n[sdvig2:] + way_or
+            
+            # print("Way: ", way_k, " I: ", i) 
+        #     self.create_path(way) 
+        #     self.clean_path(way)
+        #     self.create_path(way_p)
+        #     self.clean_path(way_p)
+        #     self.create_path(way_m)
+        #     self.clean_path(way_m)
+        # # print(way)
+                
+        # rang = len(arr)
+        # if rang > MAX_GRAPH:
+        #     rang = MAX_GRAPH
+            
+        # for i in range(rang):
+            tmp = self.rec_dinamic(params = arr[i],way = way_k,z=i+1)
             self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp)
-            self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
+            # self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
              
     def sost_in_fi(self, key = 'all'):
         n = self.N
@@ -213,10 +334,10 @@ class Original_sist(object):
         return ress
     
     def anti_zamena_2(self, arr):
-        fi1 = arr[0]
-        fi2 = fi1 - arr[1]
-        fi3 = fi1 - arr[2]
-        ress = [fi1, fi2, fi3, arr[3], arr[4], arr[5]]
+        fi1 = self.fi1
+        fi2 = fi1 - arr[0]
+        fi3 = fi1 - arr[1]
+        ress = [fi1, fi2, fi3, arr[2], arr[3], arr[4]]
         return ress
                 
     # чистим папку
@@ -278,7 +399,7 @@ if __name__ == "__main__":
     tmp = [4,np.pi, 0]
     ors = Original_sist(p = tmp, fi = 1)
     # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    ors.sost_in_fi(key='st')
+    ors.sost_in_fi(key='all')
     
 
 

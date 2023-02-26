@@ -6,6 +6,7 @@ from scipy.optimize import root
 import joblib 
 from numpy import linalg as LA
 import os, shutil
+from itertools import groupby
 
 
 #Параметры системы 
@@ -54,9 +55,10 @@ class Equilibrium_states(object):
     #поиск состояний равновесия для определенного параметра
     def state_equil(self,NMKA=[3,1,1,np.pi/2]):
         all_sol = [] 
+        all_sol_full = []
         self.N,self.M,self.K,self.alpha = NMKA
-        ran_x=[0,2*np.pi]
-        ran_y=[0,2*np.pi]
+        ran_x=[0,2*np.pi-0.001]
+        ran_y=[0,2*np.pi-0.001]
         
         X = np.linspace(ran_x[0],ran_x[1],col_razb)
         Y = np.linspace(ran_y[0],ran_y[1],col_razb)
@@ -69,10 +71,24 @@ class Equilibrium_states(object):
                 xar,yar,var,war = sol.x
                 xar = round(xar,6)
                 yar = round(yar,6)
-                if [xar,yar,self.M,self.K,self.alpha] not in all_sol and (xar>=0 and xar<2*np.pi) and (yar<2*np.pi and yar>=0):   
-                    all_sol.append([xar,yar,self.M,self.K,self.alpha])
-                
-        return all_sol
+                if (xar>=0 and xar<2*np.pi) and (yar<2*np.pi and yar>=0):
+                    if [round(xar,3),round(yar,3),self.M,self.K,round(self.alpha,5)] not in all_sol:
+                        if round(xar,2) == round(2*np.pi,2) and  round(yar,2) != round(2*np.pi,2):
+                            all_sol_full.append([0.0,yar,self.M,self.K,round(self.alpha,5)])
+                            all_sol.append([0.0,round(yar,3),self.M,self.K,round(self.alpha,5)])
+                        elif round(yar,2) == round(2*np.pi,2) and round(xar,2) != round(2*np.pi,2):
+                            all_sol_full.append([xar,0.0,self.M,self.K,round(self.alpha,5)])
+                            all_sol.append([round(xar,3),0.0,self.M,self.K,round(self.alpha,5)])
+                        elif (round(xar,2) == round(2*np.pi,2) and round(yar,2) == round(2*np.pi,2)):
+                            all_sol_full.append([0.0,0.0,self.M,self.K,round(self.alpha,5)])
+                            all_sol.append([0.0,0.0,self.M,self.K,round(self.alpha,5)])
+                        else:
+                            all_sol_full.append([xar,yar,self.M,self.K,round(self.alpha,5)])
+                            all_sol.append([round(xar,3),round(yar,3),self.M,self.K,round(self.alpha,5)])
+        
+        
+        new_arr = [el for el, _ in groupby(all_sol)]
+        return new_arr
     
     #поиск всех состояний равновесия
     def parall_st_eq(self):
@@ -97,6 +113,7 @@ class Equilibrium_states(object):
                     j = str(j)+'\n'
                     file.write(j)  
                 # file.write('--------------------------------------------------------\n')
+
     #матрица якоби
     def jakobi(self, param):
         x,y,M,K,alpha = param
@@ -271,9 +288,9 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [4,1]
+    tmp = [4 ,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    # es.parall_st_eq() #подсчет всех состояний
-    es.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.parall_st_eq() #подсчет всех состояний
+    # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   

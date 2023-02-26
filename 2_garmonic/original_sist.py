@@ -240,16 +240,16 @@ class Original_sist(object):
         return res
 
 if __name__ == "__main__":
-    tmp = [4,1, 0]
+    tmp = [15, 1, 0]
     ors = Original_sist(p = tmp, fi = 1)
     # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    # ors.sost_in_fi(key='all') #"st","un_st","rz","all"
+    ors.sost_in_fi(key='st') #"st","un_st","rz","all"
     
       
-    tmp = ['st','un_st','rz']
+    # tmp = ['st','un_st','rz']
     
-    for i in tmp:
-        ors.sost_in_fi(key=i) #"st","un_st","rz","all"
+    # for i in tmp:
+    #     ors.sost_in_fi(key=i) #"st","un_st","rz","all"
     
     
 
