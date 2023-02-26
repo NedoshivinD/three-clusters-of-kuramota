@@ -6,6 +6,7 @@ from scipy.optimize import root
 import joblib 
 from numpy import linalg as LA
 import os, shutil
+from itertools import groupby
 
 
 #Параметры системы 
@@ -43,27 +44,7 @@ class Equilibrium_states(object):
         # x with 1 dot
         f[0] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
         # y with 1 dot
-        f[1] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
-        # x with 2 dots
-        f[2] = v
-        # y with 2 dots
-        f[3] = w
-        
-        return f
-    # Сама система (возможно стоит использовать при расчете состояний равновесия)
-    def syst(self,param,t):
-        N = self.N
-        M = self.M
-        K = self.K
-        alpha = self.alpha
-        m = self.m
-        
-        x,y,v,w = param #[x,y,w,v] - точки
-        f = np.zeros(4)
-        # x with 1 dot
-        f[0] = 1/m*(1/N * ((K-M)*np.sin(alpha) - K*np.sin(x+alpha) - M*np.sin(x-alpha)-(N-M-K)*np.sin(y-alpha)+(N-M-K)*np.sin(-x+y-alpha)) - v)
-        # y with 1 dot
-        f[1] = 1/m*(1/N * (-(N-M-2*K)*np.sin(alpha) - K*np.sin(y+alpha) - M*np.sin(x-alpha)-(N-M-K)*np.sin(y-alpha) + M*np.sin(x-y-alpha)) - w)
+        f[1] = 1/m*(1/N * ((N+M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         # x with 2 dots
         f[2] = v
         # y with 2 dots
@@ -75,24 +56,24 @@ class Equilibrium_states(object):
     def state_equil(self,NMKA=[3,1,1,np.pi/2]):
     
         all_sol = [] 
+        all_sol_full = []
         self.N,self.M,self.K,self.alpha = NMKA
-        if self.M + self.K < self.N:    
-            ran_x=[0,2*np.pi]
-            ran_y=[0,2*np.pi]
-            
-            X = np.linspace(ran_x[0],ran_x[1],col_razb)
-            Y = np.linspace(ran_y[0],ran_y[1],col_razb)
-            v = 0
-            w = 0
-            
-            for x in X:
-                for y in Y:
-                    sol = root(self.syst,[x,y,v,w],args=(0),method='lm')
-                    xar,yar,var,war = sol.x
-                    xar = round(xar,6)
-                    yar = round(yar,6)
-                    if [xar,yar,self.M,self.K,self.alpha] not in all_sol and (xar>=0 and xar<2*np.pi) and (yar<2*np.pi and yar>=0):   
-                        all_sol.append([xar,yar,self.M,self.K,self.alpha])
+        ran_x=[0,2*np.pi]
+        ran_y=[0,2*np.pi]
+        
+        X = np.linspace(ran_x[0],ran_x[1],col_razb)
+        Y = np.linspace(ran_y[0],ran_y[1],col_razb)
+        v = 0
+        w = 0
+        
+        for x in X:
+            for y in Y:
+                sol = root(self.syst,[x,y,v,w],args=(0),method='lm')
+                xar,yar,var,war = sol.x
+                xar = round(xar,6)
+                yar = round(yar,6)
+                if [xar,yar,self.M,self.K,self.alpha] not in all_sol and (xar>=0 and xar<2*np.pi) and (yar<2*np.pi and yar>=0):   
+                    all_sol.append([xar,yar,self.M,self.K,self.alpha])
                 
         return all_sol
     
@@ -119,6 +100,7 @@ class Equilibrium_states(object):
                     j = str(j)+'\n'
                     file.write(j)  
                 # file.write('--------------------------------------------------------\n')
+
     #матрица якоби
     def jakobi(self, param):
         x,y,M,K,alpha = param
@@ -304,12 +286,9 @@ class Equilibrium_states(object):
     
 
 if __name__ == "__main__":
-    tmp = [5,1]
+    tmp = [4,1]
     es = Equilibrium_states(p = tmp)
-    # es.dinamic(params=[np.pi/2, -np.pi/2, 1, 2, 0])
-    es.parall_st_eq() #подсчет всех состояний
-    # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
-    key = ['st','un_st','rz']
-    for k in key:
-        es.show_sost(key=k)
+    # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
+    # es.parall_st_eq() #подсчет всех состояний
+    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   
