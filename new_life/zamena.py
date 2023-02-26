@@ -52,6 +52,25 @@ class Equilibrium_states(object):
         
         return f
     
+    def __trash_off__(self,arr):
+        tmp = []
+        tmp_res = []
+        res = []
+        par = arr[0][2:5]
+        for i in arr:
+            if par == i[2:5]:
+                tmp = [round(np.sin(i[0])+np.cos(i[0])),round(np.sin(i[1])+np.cos(i[1]))]
+                if tmp not in tmp_res:
+                    tmp_res.append(tmp)
+                    res.append(i)
+            else :
+                tmp_res = []
+                par = i[2:5]
+                tmp = [round(np.sin(i[0])+np.cos(i[0])),round(np.sin(i[1])+np.cos(i[1]))]
+                tmp_res.append(tmp)
+                res.append(i)
+        return res
+
     #поиск состояний равновесия для определенного параметра
     def state_equil(self,NMKA=[3,1,1,np.pi/2]):
         all_sol = [] 
@@ -86,8 +105,8 @@ class Equilibrium_states(object):
                             all_sol_full.append([xar,yar,self.M,self.K,round(self.alpha,5)])
                             all_sol.append([round(xar,3),round(yar,3),self.M,self.K,round(self.alpha,5)])
         
-        
-        new_arr = [el for el, _ in groupby(all_sol)]
+        new_arr = self.__trash_off__(all_sol_full)
+        # new_arr = [el for el, _ in groupby(all_sol)]
         return new_arr
     
     #поиск всех состояний равновесия
@@ -288,7 +307,7 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [4 ,1]
+    tmp = [3 ,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     es.parall_st_eq() #подсчет всех состояний
