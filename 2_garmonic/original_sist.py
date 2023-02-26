@@ -58,10 +58,12 @@ class Original_sist(object):
     #динамика для одной точки
     def dinamic(self, params = [np.pi, 1, np.pi/3, np.pi/3]):
         tmp = self.anti_zamena(arr=params)
-        start_point=np.zeros(2)
+        start_point=np.zeros(4)
         start_point[0],start_point[1], self.M,self.alpha, self.beta = tmp[0] 
         start_point[0] = start_point[0]+eps
         start_point[1] = start_point[1]+eps
+        start_point[2] += eps
+        start_point[3] += eps
         
         tmp = integrate.odeint(self.syst, start_point, self.t)
         plt.plot(self.t,tmp[:,0] - tmp[:,0],label="fi1")
@@ -235,13 +237,12 @@ class Original_sist(object):
 
 if __name__ == "__main__":
     tmp = [4,1, 0]
-    ors = Original_sist(p = tmp, fi = 1)
-    # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    # ors.sost_in_fi(key='all') #"st","un_st","rz","all"
+    ors = Original_sist(p = tmp, fi = np.pi)
+    # ors.dinamic(params=[[0.0, 2, 0.0, 3.141592653589793]])
     
+    # ors.sost_in_fi(key='all') #"st","un_st","rz","all"
       
     tmp = ['st','un_st','rz']
-    
     for i in tmp:
         ors.sost_in_fi(key=i) #"st","un_st","rz","all"
     

@@ -214,6 +214,14 @@ class Original_sist(object):
     def anti_zamena_2(self, arr):
         ress = []
         fi1 = arr[0]
+        fi2 = -fi1 - arr[1]
+        fi3 = -fi1 - arr[2]
+        ress = [fi1, fi2, fi3, arr[3], arr[4], arr[5]]
+        return ress
+    
+    def anti_zamena_22(self, arr):
+        ress = []
+        fi1 = arr[0]
         fi2 = fi1 - arr[1]
         fi3 = fi1 - arr[2]
         ress = [fi1, fi2, fi3, arr[3], arr[4], arr[5]]
@@ -275,12 +283,14 @@ class Original_sist(object):
         return res
 
 if __name__ == "__main__":
-    tmp = [4,np.pi, 0]
+    tmp = [5,1, 0]
     ors = Original_sist(p = tmp, fi = 1)
-    # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    ors.sost_in_fi(key='un_st')
+    # ors.dinamic(params=[[3.808539, 3.808539, 1, 2, 2.0943951023931953]])
+    # ors.sost_in_fi(key='st')
     
-
+    key = ['st','un_st','rz']
+    for k in key:
+        ors.sost_in_fi(key=k) 
 
     # np.angel(fin - fi0)
     # параметр порядка

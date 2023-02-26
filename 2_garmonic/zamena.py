@@ -43,7 +43,7 @@ class Equilibrium_states(object):
         x,w = param #[x,y,w,v] - точки
         f = np.zeros(2)
         # x with 1 dot
-        f[0] = 1/m*(1/N * ((N - M)*(k1*np.sin(-x-alpha)+k2*np.sin(-2*x-beta)) - M*(k1*np.sin(x-alpha) + k2*np.sin(2*x - beta))))
+        f[0] = 1/m*(1/N * ( N*(np.sin(alpha) + np.sin(beta)) + (N - M)*(k1*np.sin(-x-alpha) + k2*np.sin(-2*x-beta)) - M*(k1*np.sin(x-alpha) + k2*np.sin(2*x - beta))))
         # x with 2 dots
         f[1] = w
         
@@ -147,8 +147,8 @@ class Equilibrium_states(object):
         
         tmp = integrate.odeint(self.syst, start_point, self.t)
         plt.plot(self.t,tmp[:,0],label="x")
-        plt.xlim(0, 100)
-        plt.ylim(-10, 10)
+        # plt.xlim(0, 100)
+        # plt.ylim(-10, 10)
         plt.legend()
         plt.show()
     
@@ -258,14 +258,15 @@ class Equilibrium_states(object):
 if __name__ == "__main__":
     tmp = [4,1]
     es = Equilibrium_states(p = tmp)
-    # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    es.parall_st_eq() #подсчет всех состояний
-    # es.show_sost(key='all') #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
+    es.dinamic(params=[6.103964, 1, 2.0943951023931953, 3.141592653589793])
     
-    tmp = ['st','un_st','rz']
+    # es.parall_st_eq() #подсчет всех состояний
     
-    for i in tmp:
-        es.show_sost(key=i) #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
+    # # es.show_sost(key='all') #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
+    
+    # tmp = ['st','un_st','rz']
+    # for i in tmp:
+    #     es.show_sost(key=i) #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
     
     
   
