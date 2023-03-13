@@ -140,13 +140,12 @@ class Equilibrium_states(object):
         m = self.m
         
         f = []
-        f.append([0, 0, 1.0, 0])
-        f.append([0, 0, 0, 1.0])
-        f.append([1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(x - alpha) - (N - M - K)*np.cos(x-y-alpha)),
-            1/(N*m)*(-(N-M-K)*np.cos(y + alpha) + (N-M-K)*np.cos(x-y-alpha)), -1/m, 0])
-        f.append([1/(N*m)*(-M*np.cos(x+alpha) + M*np.cos(y-x-alpha)),
-            1/(N*m)*(-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha)),
-            0, -1/m])
+        f.append([-1/m, 0, 1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(x - alpha) - (N - M - K)*np.cos(x-y-alpha)),
+            1/(N*m)*(-(N-M-K)*np.cos(y + alpha) + (N-M-K)*np.cos(x-y-alpha))])
+        f.append([0, -1/m, 1/(N*m)*(-M*np.cos(x+alpha) + M*np.cos(y-x-alpha)),
+            1/(N*m)*(-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha))])
+        f.append([1.0, 0, 0, 0])
+        f.append([0, 1.0, 0, 0])
         arr = np.array(f)
         return(arr)
 
@@ -156,6 +155,56 @@ class Equilibrium_states(object):
         lam, vect = LA.eig(matrix)
         return lam
     
+    def jacobi_full(self,start_point):
+        N = self.N
+        omega = self.omega
+        m = self.m
+        alpha = self.alpha
+        phi = np.zeros(N)
+        v = np.zeros(N)
+        for i in range(N):
+            phi[i] = start_point[i]
+            v[i] = start_point[i+N]
+        f = np.zeros(2*N)
+
+        s = 0
+
+        derivatives = np.array([])
+        for i in range(N):
+            tmp_arr = np.zeros(N)
+            for j in range(N):
+                sum = 0
+                if j == i:
+                    for k in range(N):
+                        if k == j:
+                            pass
+                        else:
+                            sum+=np.cos(phi[k]-phi[j]+alpha)
+                    tmp_arr[j] = - 1/(m*N) * sum
+                else:
+                    tmp_arr[j] = 1/(m*N) * np.cos(phi[j]-phi[i]+alpha)
+
+            derivatives = np.append(derivatives,tmp_arr)
+
+        res = np.array([])
+        for i in range(N):
+            string_arr = np.zeros(2*N)
+            string_arr[i] = - 1 / m
+            for j in range(N):
+                string_arr[N+j] =  derivatives[i+j]
+            res=np.append(res, string_arr)
+        for i in range(N):
+            string_arr = np.zeros(2*N)
+            string_arr[i] = 1
+            res=np.append(res, string_arr)
+        res = res.reshape(2*N,2*N)
+        return res
+    
+    def eigenvalues_full(self,start_point):
+        matrix = self.jacobi_full(start_point)
+        lam, vect = LA.eig(matrix)
+        return lam
+
     #Сохранение устойчивых и неустойчивых состояний равновесия 
     def rec_st_and_unst_st_eq(self):
         name_s = f"new_life\\res\\n_{self.N}\\stable_{self.N}.txt"
@@ -307,9 +356,9 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [3 ,1]
+    tmp = [5 ,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    es.parall_st_eq() #подсчет всех состояний
+    # es.parall_st_eq() #подсчет всех состояний
     # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   

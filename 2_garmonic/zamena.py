@@ -256,7 +256,7 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [4,1]
+    tmp = [5,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     es.parall_st_eq() #подсчет всех состояний

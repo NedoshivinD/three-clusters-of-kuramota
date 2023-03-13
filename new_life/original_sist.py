@@ -6,12 +6,15 @@ from scipy.optimize import root
 import joblib 
 from numpy import linalg as LA
 import os, shutil
+from sympy import Matrix, pretty
+from scipy.integrate import solve_ivp
 
 #Параметры системы 
 
 col_razb = 10
 MAX_GRAPH = 100
 eps = 0.1
+Max_time = 100
 
 
 class Original_sist(object):
@@ -27,10 +30,10 @@ class Original_sist(object):
         self.sost = []
         self.ust = []
         self.un_ust = []
-        self.t = np.linspace(0,100,100)
+        self.t = np.linspace(0,Max_time,Max_time)
 
     # Сама система (возможно стоит использовать при расчете состояний равновесия)
-    def syst(self,param,t):
+    def syst(self,t,param):
         N = self.N
         M = self.M
         K = self.K
@@ -55,43 +58,142 @@ class Original_sist(object):
         
         return f
     
+    def full_syst(self,start_point):
+        N = self.N
+        omega = self.omega
+        m = self.m
+        M = self.M
+        K = self.K
+        alpha = self.alpha
+        phi = np.zeros(N)
+        v = np.zeros(N)
+        for i in range(N):
+            phi[i] = start_point[i]
+            v[i] = start_point[i+N]
+        f = np.zeros(2*N)
+
+        s = 0
+        f = np.zeros(2*N)
+        
+        for j in range(N):
+            for phi_i in phi:
+                s += np.sin(phi_i - phi[j] + alpha)
+            
+            f[j] = s + omega + v[j]
+            
+            f[j+N] = v[j]
+            
+        return f
     #матрица Якоби
     def jakobi(self, param):
-        tmp = self.anti_zamena_2(arr=param)
 
-        fi1,fi2,fi3,M,K,alpha = tmp
+        fi1,fi2,fi3,M,K,alpha = param
         N = self.N
         m = self.m
         f = np.zeros(shape=(6,6))
-        f[0]=[0, 0, 0, 1.0, 0, 0]
-        f[1]=[0, 0, 0, 0, 1.0, 0]
-        f[2]=[0, 0, 0, 0, 0, 1.0]
-        f[3]=[1/m*(1/N * (-M*np.cos(fi2 - fi1 + alpha) - (N-M-K)*np.cos(fi3 - fi1 + alpha))),
-            1/m*(1/N * (M*np.cos(fi2 - fi1 + alpha))),
-            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi1 + alpha))),
-            -1/m,
+        
+        f[0]=[-1/m,
             0,
-            0]
-        f[4]=[1/m*(1/N * (K*np.cos(fi1 - fi2 + alpha))),
-            1/m*(1/N * (- K*np.cos(fi1 - fi2 + alpha) - (N-M-K)*np.cos(fi3 - fi2 + alpha))),
-            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi2 + alpha))),
-            0, 
+            0,
+            1/m*(1/N * (-M*np.cos(fi2 - fi1 + alpha) - (N-M-K)*np.cos(fi3 - fi1 + alpha))),
+            1/m*(1/N * (M*np.cos(fi2 - fi1 + alpha))),
+            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi1 + alpha))),]
+        f[1]=[0, 
             -1/m, 
-            0]
-        f[5]=[1/m*(1/N * (K*np.cos(fi1 - fi3 + alpha))),
+            0,
+            1/m*(1/N * (K*np.cos(fi1 - fi2 + alpha))),
+            1/m*(1/N * (- K*np.cos(fi1 - fi2 + alpha) - (N-M-K)*np.cos(fi3 - fi2 + alpha))),
+            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi2 + alpha)))]
+        f[2]=[0, 
+            0, 
+            -1/m,
+            1/m*(1/N * (K*np.cos(fi1 - fi3 + alpha))),
             1/m*(1/N * (M*np.cos(fi2 - fi3 + alpha))),
-            1/m*( 1/N * (-K*np.cos(fi1 - fi3 + alpha) - M*np.cos(fi2 - fi3 + alpha))),
-            0, 
-            0, 
-            -1/m]
+            1/m*(1/N * (-K*np.cos(fi1 - fi3 + alpha) - M*np.cos(fi2 - fi3 + alpha)))]
+        f[3]=[1.0, 0, 0, 0, 0, 0]
+        f[4]=[0, 1.0, 0, 0, 0, 0]
+        f[5]=[0, 0, 1.0, 0, 0, 0]
         return f
+    def jacobi_full(self,start_point):
+        N = self.N
+        omega = self.omega
+        m = self.m
+        M = self.M
+        K = self.K
+        alpha = self.alpha
+        phi = np.zeros(N)
+        v = np.zeros(N)
+        for i in range(N):
+            phi[i] = start_point[i]
+            v[i] = start_point[i+N]
+        f = np.zeros(2*N)
+
+        s = 0
+
+        derivatives = np.array([])
+        for i in range(N):
+            tmp_arr = np.zeros(N)
+            for j in range(N):
+                sum = 0
+                if j == i:
+                    for k in range(N):
+                        if k == j:
+                            pass
+                        else:
+                            sum+=np.cos(phi[k]-phi[j]+alpha)
+                    tmp_arr[j] = - 1/(m*N) * sum
+                else:
+                    tmp_arr[j] = 1/(m*N) * np.cos(phi[j]-phi[i]+alpha)
+
+            derivatives = np.append(derivatives,tmp_arr)
+
+        res = np.array([])
+        for i in range(N):
+            string_arr = np.zeros(2*N)
+            string_arr[i] = - 1 / m
+            for j in range(N):
+                string_arr[N+j] =  derivatives[i+j]
+            res=np.append(res, string_arr)
+        for i in range(N):
+            string_arr = np.zeros(2*N)
+            string_arr[i] = 1
+            res=np.append(res, string_arr)
+        res = res.reshape(2*N,2*N)
+        return res
+    
+    def eigenvalues_full(self,start_point):
+        matrix = self.jacobi_full(start_point)
+        lam, vect = LA.eig(matrix)
+        return lam
+    
+    def check_lams_full(self,params):
+        N = self.N
+        start_point = np.zeros(2*N)
+        par = self.anti_zamena_2(arr=params)
+        phi1,phi2,phi3,K,M,alpha = par
+        v1,v2,v3 = (0,0,0)
+        for i in range(K):
+            print(i)
+            start_point[i] = phi1
+            start_point[i+N] = v1
+        for i in range(M):
+            print(i)
+            start_point[K+i] = phi2
+            start_point[K+i+N] = v2
+        for i in range(N-M-K):
+            print(i)
+            start_point[K+M+i] = phi3
+            start_point[K+M+i+N] = v3
+        lam = self.eigenvalues_full(start_point)
+        print("par: " + str(par) + "\n" +"lam: " + str(lam))
+    
     #якобиан
     def eigenvalues(self,param):
         matrix = self.jakobi(param)
         lam, vect = LA.eig(matrix)
         return lam
     
-    def check_lams(self, params):
+    def check_lams(self, params,i):
         lam = self.eigenvalues(params)
         count_st = 0
         count_unst = 0
@@ -105,28 +207,35 @@ class Original_sist(object):
                 count_rz+=1
         if count_st == 6:
             key = 'st'
-        if count_st != 6 and count_rz==0:
+        elif count_st != 6 and count_rz==0:
             key = 'un_st'
-        if count_rz!=0 and count_st == 0 and count_unst == 0:
+        else:
             key = 'rz'
-        # print("Lamdas: ", lam, " Params: ", params, " key: ", key)
+        print("i: ", i, "Lamdas: ", lam,"\n", " Params: ", params, " key: ", key)
         return key
 
     #динамика для одной точки
     def dinamic(self, params = [np.pi, np.pi, 1, 1, np.pi/3]):
-        tmp = self.anti_zamena(arr=params)
+        par = self.anti_zamena(arr=params)
+        par = np.reshape(par, (len(par[0])))
         start_point=np.zeros(6)
-        start_point[0],start_point[1], start_point[2],self.M,self.K,self.alpha = tmp[0] 
+        start_point[0],start_point[1], start_point[2],self.M,self.K,self.alpha = par
         start_point[0] = start_point[0]+eps
         start_point[1] = start_point[1]+eps
         start_point[2] = start_point[2]+eps
+        start_point[3] = eps
+        start_point[4] = eps
+        start_point[5] = eps
         
-        tmp = integrate.odeint(self.syst, start_point, self.t)
-        plt.plot(self.t,tmp[:,0] - tmp[:,0],label="fi1")
-        plt.plot(self.t,tmp[:,1] - tmp[:,0],label="fi2", linestyle = '--')
-        plt.plot(self.t,tmp[:,2] - tmp[:,0],label="fi3", linestyle = '-.')
+        # tmp = integrate.odeint(self.syst, start_point, self.t)
+        res = solve_ivp(self.syst, [0,Max_time],start_point)
+        plt.plot(res.t,np.sin(res.y[0]),label="sin(fi1)")
+        plt.plot(res.t,np.sin(res.y[1]),label="sin(fi2)", linestyle = '--')
+        plt.plot(res.t,np.sin(res.y[2]),label="sin(fi3)", linestyle = '-.')
         # plt.xlim(0, 100)
-        # plt.ylim(0, 100)
+        plt.ylim(-1, 1)
+        plt.text(x=Max_time//2,y=1.12, horizontalalignment = 'center', s="phi 1 = " + str(par[0]) + ", phi 2 = " + str(par[1]) + ", phi 3 = " + 
+                str(par[2]) + ", K = " + str(par[3]) + ", M = " + str(par[4]) + ", alpha = " + str(par[5]))
         plt.legend()
         plt.show()
         
@@ -138,22 +247,30 @@ class Original_sist(object):
         start_point[0] += eps
         start_point[1] += eps
         start_point[2] += eps
-        tmp = integrate.odeint(self.syst, start_point, self.t)
+        # tmp = integrate.odeint(self.syst, start_point, self.t)
+        tmp = solve_ivp(self.syst, [0, Max_time],start_point, t_eval=self.t, trol=1e-11,atol=1e-11)
         # for x in tmp:
         #     x[0] = np.sin()
-        plt.plot(self.t,tmp[:,0] - tmp[:,0],label="fi1")
-        plt.plot(self.t,tmp[:,1] - tmp[:,0],label="fi2", linestyle = '--')
-        plt.plot(self.t,tmp[:,2] - tmp[:,0],label="fi3", linestyle = '-.')
+        plt.plot(tmp.t,np.sin(tmp.y[0]),label="sin(fi1)")
+        plt.plot(tmp.t,np.sin(tmp.y[1]),label="sin(fi2)", linestyle = '--')
+        plt.plot(tmp.t,np.sin(tmp.y[2]),label="sin(fi3)", linestyle = '-.')
+        # plt.plot(tmp.t,tmp.y[3],label="fi1_with_dot")
+        # plt.plot(tmp.t,tmp.y[4],label="fi2_with_dot", linestyle = '--')
+        # plt.plot(tmp.t,tmp.y[5],label="fi3_with_dot", linestyle = '-.')
         # plt.xlim(0, 100)
         # plt.ylim(0, 1)
+        plt.xlabel("t")
+        plt.ylabel("sin(phi[i])")
+        plt.text(x=Max_time//2,y=1.1, horizontalalignment = 'center', s="phi 1 = " + str(params[0]) + ", phi 2 = " + str(params[1]) + ", phi 3 = " + 
+                str(params[2]) + ", K = " + str(params[3]) + ", M = " + str(params[4]) + ", alpha = " + str(params[5]))
         plt.legend()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
         return tmp
 
-    def rec_dinamic_par(self, way, z, arr):
+    def rec_dinamic_par(self, way, z, arr,t):
         R1 = self.order_parameter(arr)
-        plt.plot(self.t, R1)
+        plt.plot(t, R1)
         # plt.xlim(0, 100)
         plt.ylim(0, 1.1)
         plt.savefig(way + f'graph_{z}.png')
@@ -261,13 +378,9 @@ class Original_sist(object):
         self.clean_path(way_m4)
 
         for i in range(rang):
-            key = self.check_lams(arr[i])
+            key = self.check_lams(arr[i],i)
             way_n = self.new_way(way, key)   
             # sdvig1 = -4 
-            sdvig2 = 15
-            way_or = 'origin\\'
-            way_par = 'order_params\\'
-            way_map = 'map\\'
 
             # way = way[0:sdvig1]+f"{n}"+way[sdvig1:]
             way_m = way_n[0:sdvig2]+f"{n}" + way_n[sdvig2:] + way_map
@@ -289,7 +402,7 @@ class Original_sist(object):
             
         # for i in range(rang):
             tmp = self.rec_dinamic(params = arr[i],way = way_k,z=i+1)
-            self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp)
+            self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp.y, t = tmp.t)
             # self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
              
     def sost_in_fi(self, key = 'all'):
@@ -315,7 +428,7 @@ class Original_sist(object):
 
         res = self.razbor_txt(name)
         res_fi = self.anti_zamena(res)
-
+        
 
         self.show_sost(arr = res_fi, key=key, res = res)
         # ress = self.order_parameter(res_fi)
@@ -384,24 +497,34 @@ class Original_sist(object):
 
     def order_parameter(self, arr):
         res = []
-        for x in arr:
+        for i in range(Max_time):
             sumr = 0
-            sumi = 0
-            for i in range(3):
-                tmp = np.exp(x[i]*1j)
+            sumi = 0                
+            for j in range(3):
+                tmp = np.exp(arr[:,i][j]*1j)
                 sumr += tmp.real
                 sumi += tmp.imag
-            sum = 1/3 * np.sqrt(sumr ** 2 + sumi ** 2)
+                sum = 1/3 * np.sqrt(sumr ** 2 + sumi ** 2)
             res.append(sum)
+        # for x in arr:
+            
+        #     sumr = 0
+        #     sumi = 0
+        #     for i in range(3):
+        #         tmp = np.exp(x[i]*1j)
+        #         sumr += tmp.real
+        #         sumi += tmp.imag
+        #     sum = 1/3 * np.sqrt(sumr ** 2 + sumi ** 2)
+        #     res.append(sum)
         return res
 
 if __name__ == "__main__":
-    tmp = [4,np.pi, 0]
-    ors = Original_sist(p = tmp, fi = 1)
-    # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    ors.sost_in_fi(key='all')
+    tmp = [5, 1, 1]
+    ors = Original_sist(p = tmp, fi = 0)
+    # ors.dinamic(params=[[np.pi, 0.0, 1, 2, 2]])
+    # ors.sost_in_fi(key='all')
     
-
+    ors.check_lams_full([4.459709, 2.636232, 1, 2, 1.0472])
 
     # np.angel(fin - fi0)
     # параметр порядка
