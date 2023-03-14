@@ -103,11 +103,11 @@ def din_thr_map2(phi,v,par,time):
 
     
 if __name__ == "__main__":
-    phi = [0, np.pi, np.pi, np.pi, np.pi, np.pi] #0,0,0,0,0,0,0,0, -np.pi, -np.pi,-np.pi, -np.pi,-np.pi, -np.pi, np.pi,
+    phi = [0,0,0,0, 1.823477, 1.823477,1.823477, 1.823477,1.823477, 1.823477, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953] 
     v = np.zeros(len(phi))
-    alpha = 0
+    alpha = 2.0944
     w = 1
-    t_max = 1000
+    t_max = 500
     t = np.linspace(0,t_max,t_max)
     a = din_thr_map(phi,v,[alpha,w],t,t_max)
     
@@ -116,14 +116,21 @@ if __name__ == "__main__":
         matrix = np.append(matrix,a.y[i])
     
         
-    for i in range(len(matrix)):
-        matrix[i] = math.remainder(matrix[i], 2*math.pi)
+    # for i in range(len(matrix)):
+    #     matrix[i] = math.remainder(matrix[i], 2*math.pi)
+    matrix = np.angle(np.exp(1j*matrix))
     matrix = matrix.reshape((len(phi),t_max))
+
+    # l = len(phi) - 1
+    # while l>=0:
+    #     # if l != 19:
+    #     matrix[l] = matrix[l] - matrix[0]
+    #     l-=1
+    # matrix[l] = matrix[l] - matrix[19]
+
+    # for i in range(len(phi)):
     
-    for i in range(len(phi)):
-        matrix[i] = matrix[i] - matrix[0]
-    
-    
+    print(matrix)
     # plt.xlim((0,20))
     plt.imshow(matrix, cmap ='hot', interpolation='nearest')
     plt.show()

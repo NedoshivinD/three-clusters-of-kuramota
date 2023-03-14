@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 from scipy.optimize import root
 import joblib 
 from numpy import linalg as LA
-import os, shutil
+import os, shutil, sys
 from sympy import Matrix, pretty
 from scipy.integrate import solve_ivp
+import ast
 
 #Параметры системы 
 
@@ -159,6 +160,7 @@ class Original_sist(object):
             string_arr[i] = 1
             res=np.append(res, string_arr)
         res = res.reshape(2*N,2*N)
+        # print(res)
         return res
     
     def eigenvalues_full(self,start_point):
@@ -173,20 +175,69 @@ class Original_sist(object):
         phi1,phi2,phi3,K,M,alpha = par
         v1,v2,v3 = (0,0,0)
         for i in range(K):
-            print(i)
             start_point[i] = phi1
             start_point[i+N] = v1
         for i in range(M):
-            print(i)
             start_point[K+i] = phi2
             start_point[K+i+N] = v2
         for i in range(N-M-K):
-            print(i)
             start_point[K+M+i] = phi3
             start_point[K+M+i+N] = v3
         lam = self.eigenvalues_full(start_point)
-        print("par: " + str(par) + "\n" +"lam: " + str(lam))
-    
+        # print("par: " + str(par) + "\n" +"lam: " + str(lam))
+        self.save_lamdas(lam)
+
+    def all_new_lam(self, way):
+        return 0
+
+
+    def save_lamdas(self, new_lam, key='st'):
+        way_new = f"new_life\\res\\n_{self.N}\\new_lam.txt"
+        if key == 'st':
+            way_old = f"new_life\\res\\n_{self.N}\\stable_{self.N}.txt"
+        elif key == 'un_st':
+            way_old = f"new_life\\res\\n_{self.N}\\non_stable_{self.N}.txt"
+        elif key == 'rz':
+            way_old = f"new_life\\res\\n_{self.N}\\range_zero_{self.N}.txt"
+        
+        res = []
+        with open(way_old,'r') as file:
+            for line in file:
+                res.append(self.razb_str_lam(line.rstrip()))
+        old_lam = []
+        for x in res:
+            tmp = self.razb_str_2(x)
+            old_lam.append(tmp)
+        
+        with open(way_new,"w",encoding="utf-8") as file:
+            file.write(str(new_lam))
+            file.write(str(res[0]))
+
+    def razb_str_lam(self, str):
+        res = []
+        tmp = None
+        count=0
+        for c in str:
+            if c=='[' or count!=2:
+                if c=='[':
+                    count+=1
+                continue
+            if c=='[' and count == 2:
+                if len(tmp)!=0:
+                    res.append(tmp)
+                    tmp = ''
+                continue
+            if c==']':
+                break
+            if tmp is None:
+                tmp=c
+            else:
+                tmp+=c
+        if len(tmp)!=0:
+            res.append(tmp)
+        res = list(res)
+        return res
+
     #якобиан
     def eigenvalues(self,param):
         matrix = self.jakobi(param)
@@ -495,6 +546,24 @@ class Original_sist(object):
             tmp+=c
         return all
 
+    def razb_str_2(self,str):
+        all = []
+        tmp = ''
+        str=str[0]
+        for c in str:
+            if c==' ' or c=='[':
+                continue
+            if c==',' or c==']':
+                all.append(complex(tmp))
+                tmp = ''
+                if c==']':
+                    break
+                continue
+
+            tmp+=c
+        all.append(complex(tmp))           
+        return all
+
     def order_parameter(self, arr):
         res = []
         for i in range(Max_time):
@@ -519,12 +588,12 @@ class Original_sist(object):
         return res
 
 if __name__ == "__main__":
-    tmp = [5, 1, 1]
+    tmp = [5 , 1, 1]
     ors = Original_sist(p = tmp, fi = 0)
     # ors.dinamic(params=[[np.pi, 0.0, 1, 2, 2]])
     # ors.sost_in_fi(key='all')
     
-    ors.check_lams_full([4.459709, 2.636232, 1, 2, 1.0472])
+    ors.check_lams_full([2.474646, 2.636232, 1, 2, 1.0472])
 
     # np.angel(fin - fi0)
     # параметр порядка

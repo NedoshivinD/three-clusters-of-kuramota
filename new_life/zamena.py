@@ -218,6 +218,9 @@ class Equilibrium_states(object):
                     for i in self.sost:
                         for j in i:
                             tmp = self.eigenvalues(j)
+                            lam = []
+                            for k in range(len(tmp)):
+                                lam.append(tmp[k])
                             z = 0
                             o = 0
                             for l in tmp.real:
@@ -227,7 +230,7 @@ class Equilibrium_states(object):
                                 
                                 if l < 0:
                                     z+=1
-                            text = str(j)+'\t'+str(tmp.real)+'\n' 
+                            text = str(j)+'\t'+str(lam)+'\n' 
                             if z == 4 and o == 0:
                                 file_s.write(text)
                             elif o==1:
@@ -359,6 +362,6 @@ if __name__ == "__main__":
     tmp = [5 ,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    # es.parall_st_eq() #подсчет всех состояний
-    # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.parall_st_eq() #подсчет всех состояний
+    # es.show_sost(key='all') #сохранение графиков #ключевые слов "all", "st", "un_st"
   
