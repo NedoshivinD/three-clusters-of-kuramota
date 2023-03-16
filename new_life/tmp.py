@@ -9,10 +9,13 @@ n_job = 4
 def iter_din(t, start_point , par):
     
     alpha,w = par
+    phi = np.zeros(len(start_point)//2)
+    v = np.zeros(len(start_point)//2)
+    
     for i in range(len(start_point)//2):
         phi[i] = start_point[i]
         v[i] = start_point[i+len(phi)]
-    # phi, v = start_point
+
     s = 0
     
     
@@ -22,16 +25,13 @@ def iter_din(t, start_point , par):
         for phi_i in phi:
             s += np.sin(phi_i - phi[j] + alpha)
         
-        f[j] = s + w + v[j]
+        f[j] = round(s + w + v[j], 7)
         
-        f[j+len(phi)] = v[j]
+        f[j+len(phi)] = round(v[j], 7)
         
         
     return f
         
-    
-    
-
 def din_thr_map(phi,v,par,t,t_max):
     res = []
     start_point = np.zeros(len(phi)*2)
@@ -40,74 +40,42 @@ def din_thr_map(phi,v,par,t,t_max):
         start_point[i+len(phi)] = v[i]
         
     
-    res = solve_ivp(iter_din,[0,t_max],start_point, args=[par],t_eval=t,rtol= 10e-7,atol=10e-7)
+    res = solve_ivp(iter_din,[0,t_max],start_point, args=[par],rtol= 10e-13,atol=10e-13) # t_eval=t,
     
     
     
     
     return res
 
-def iter_din_2(phi, v, par, ur, tmp_phi, res, time, event_for_wait, event_for_set):
+def up_arr(arr,N,num_elems):
+    res = np.array([])
+    tmp = np.zeros(num_elems//N)
     
-    for i in range(time):
-            
-        event_for_wait.wait() # wait for event
-        event_for_wait.clear() # clean event for future
-        
-        alpha,w = par
-        s = 0
-        
-        for phi_i in phi:
-            s += np.sin(phi_i - phi[ur] + alpha)
-        
-        
-        tmp_phi[ur] = s + w + v[ur]
-        
-        if ur == len(phi)-1:
-            for j in range(len(phi)):
-                phi[j] = tmp_phi[j]
-            res.append(phi)
-
-        event_for_set.set() # set event for neighbor thread
-
-
-def din_thr_map2(phi,v,par,time):
-    res = []
-    tmp_phi = []
-    for i in range(len(phi)):
-        tmp_phi.append(0)
+    if N>num_elems:
+        num_elems = N
     
-    e = []
-    for i in range(len(phi)):
-        e.append(threading.Event())
+    razb = [arr[2],arr[3],N-arr[2]-arr[3]]
     
-    t = []
-
-    for j in range(len(phi)):
-        if j != len(phi)-1:
-            t.append(threading.Thread(target=iter_din_2, args=(phi, v, par, j, tmp_phi, res, time, e[j], e[j+1])))
-        else:
-            t.append(threading.Thread(target=iter_din_2, args=(phi, v, par, j, tmp_phi, res, time, e[j], e[0])))
+    for i in range(razb[0]):
+        res = np.append(res,tmp)
     
-    for i in range(len(phi)):
-        t[i].start()
-
-    e[0].set()
-
-    for i in range(len(phi)):
-        t[i].join()
-        
+    for i in range(len(razb[1:3])):
+        tmp = tmp+arr[i]
+        for j in range(razb[i+1]):
+                    
+            res = np.append(res,tmp)
+        tmp = tmp-arr[i]
+    return res
     
+def work(param):
     
-    return res    
-
+    phi,eps,alpha,t_max = param
     
-if __name__ == "__main__":
-    phi = [0,0,0,0, 1.823477, 1.823477,1.823477, 1.823477,1.823477, 1.823477, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953] 
+    for i in range(len(phi)-len(phi)//2):#
+        phi[i] += eps
+    
     v = np.zeros(len(phi))
-    alpha = 2.0944
     w = 1
-    t_max = 500
     t = np.linspace(0,t_max,t_max)
     a = din_thr_map(phi,v,[alpha,w],t,t_max)
     
@@ -115,31 +83,45 @@ if __name__ == "__main__":
     for i in range(len(phi)):
         matrix = np.append(matrix,a.y[i])
     
-        
-    # for i in range(len(matrix)):
-    #     matrix[i] = math.remainder(matrix[i], 2*math.pi)
+
     matrix = np.angle(np.exp(1j*matrix))
-    matrix = matrix.reshape((len(phi),t_max))
+    matrix = matrix.reshape((len(phi),len(matrix)//len(phi)))
 
-    # l = len(phi) - 1
-    # while l>=0:
-    #     # if l != 19:
-    #     matrix[l] = matrix[l] - matrix[0]
-    #     l-=1
-    # matrix[l] = matrix[l] - matrix[19]
+    l = len(phi) - 1
+    while l>=0:
+        # if l != 19:
+        matrix[l] = matrix[l] - matrix[0]
+        l-=1
 
-    # for i in range(len(phi)):
     
     print(matrix)
-    # plt.xlim((0,20))
-    plt.imshow(matrix, cmap ='hot', interpolation='nearest')
+    
+    plt.imshow(matrix, cmap ='hot', interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
     plt.show()
+    
+    
     # plt.savefig('tmp.svg')
     
-    # print(din_thr_map2(phi,v,[alpha,w],t))
-    
-    # res = []
-    # for i in range(3):
-    #     iter_din(phi,v,[alpha,w],i,res)
-    # print(res)
 
+if __name__ == "__main__":
+    
+    eps = 0# 1e-17
+    
+    low_arr = [1.823477, 3.646953, 1, 2, 2.0944]
+    
+    phi1 = up_arr(low_arr,5,20)
+    alpha = low_arr[4]
+    t = 10000
+    
+    # phi = [0, 0, 0, 0, 1.823477, 1.823477, 1.823477, 1.823477, 1.823477, 1.823477, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953] #[0,0,0,0, 1.823477, 1.823477,1.823477, 1.823477,1.823477, 1.823477, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953] 
+    # alpha = 0
+    
+        
+    # print(phi1)
+    work([phi1,eps,alpha,t])
+    
+    
+    
+    
+    
+    
