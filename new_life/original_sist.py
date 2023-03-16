@@ -117,19 +117,13 @@ class Original_sist(object):
         return f
     def jacobi_full(self,start_point):
         N = self.N
-        omega = self.omega
         m = self.m
-        M = self.M
-        K = self.K
         alpha = self.alpha
         phi = np.zeros(N)
         v = np.zeros(N)
         for i in range(N):
             phi[i] = start_point[i]
             v[i] = start_point[i+N]
-        f = np.zeros(2*N)
-
-        s = 0
 
         derivatives = np.array([])
         for i in range(N):
@@ -139,7 +133,7 @@ class Original_sist(object):
                 if j == i:
                     for k in range(N):
                         if k == j:
-                            pass
+                            continue
                         else:
                             sum+=np.cos(phi[k]-phi[j]+alpha)
                     tmp_arr[j] = - 1/(m*N) * sum
@@ -147,20 +141,14 @@ class Original_sist(object):
                     tmp_arr[j] = 1/(m*N) * np.cos(phi[j]-phi[i]+alpha)
 
             derivatives = np.append(derivatives,tmp_arr)
+        derivatives = derivatives.reshape((N,N))
 
-        res = np.array([])
-        for i in range(N):
-            string_arr = np.zeros(2*N)
-            string_arr[i] = - 1 / m
-            for j in range(N):
-                string_arr[N+j] =  derivatives[i+j]
-            res=np.append(res, string_arr)
-        for i in range(N):
-            string_arr = np.zeros(2*N)
-            string_arr[i] = 1
-            res=np.append(res, string_arr)
-        res = res.reshape(2*N,2*N)
-        # print(res)
+        eye = np.eye(N)
+        block1 = -1/m * eye
+        block2 = derivatives
+        block3 = eye
+        block4 = np.zeros((N,N))
+        res = np.block([[block1,block2],[block3,block4]])
         return res
     
     def eigenvalues_full(self,start_point):
@@ -173,6 +161,7 @@ class Original_sist(object):
         start_point = np.zeros(2*N)
         par = self.anti_zamena_2(arr=params)
         phi1,phi2,phi3,K,M,alpha = par
+        self.alpha = alpha
         v1,v2,v3 = (0,0,0)
         for i in range(K):
             start_point[i] = phi1
@@ -184,14 +173,19 @@ class Original_sist(object):
             start_point[K+M+i] = phi3
             start_point[K+M+i+N] = v3
         lam = self.eigenvalues_full(start_point)
-        # print("par: " + str(par) + "\n" +"lam: " + str(lam))
-        # self.save_lamdas(lam)
         res_lam = []
         for l in lam:
             res_lam.append(np.round(complex(l),4))
         return res_lam
 
-    def all_new_lam(self, way, key):
+    def all_new_lam(self, key):
+        way = f"new_life\\res\\n_{self.N}\\"
+        if key == 'st':
+            way += f"stable_{self.N}.txt"
+        elif key == 'un_st':
+            way += f"non_stable_{self.N}.txt"
+        elif key == 'rz':
+            way += f"range_zero_{self.N}.txt"
         res = []
         tmp=[]
         with open(way) as file:
@@ -225,6 +219,8 @@ class Original_sist(object):
         with open(way_new,"w",encoding="utf-8") as file:
             for i in range(len(new_lam)):
                 file.write(str(new_lam[i]) + '\t' + str(old_lam[i]) + '\n')
+
+        self.plot_lams(old_lam,new_lam,key)
 
     def razb_str_lam(self, str):
         res = []
@@ -368,6 +364,34 @@ class Original_sist(object):
         # plt.savefig(way + f'graph_{z}.png')
         # plt.clf()
         
+    def plot_lams(self, old_lams, new_lams, key):
+        way = f"new_life\\res\\n_{self.N}\\"
+        if key == 'st':
+            way = way + "stable"
+        elif key == 'un_st':
+            way = way + "unstable"
+        elif key == 'rz':
+            way = way + "range_zero"
+        elif key == 'all':
+            way = way + "all"
+        way += "\\lams\\"
+        self.create_path(way)
+        self.clean_path(way)
+        for i in range(len(old_lams)):
+            old_lam = np.array(old_lams[i])
+            new_lam = np.array(new_lams[i])
+            real_deal_old = old_lam.real
+            not_real_deal_old = old_lam.imag
+            real_deal_new = new_lam.real
+            not_real_deal_new = new_lam.imag
+
+            plt.scatter(real_deal_old, not_real_deal_old, c='b', marker='o')
+            plt.scatter(real_deal_new, not_real_deal_new, c='r', marker='x')
+            plt.grid()
+            # plt.show()
+            plt.savefig(way + f'graph_{i+1}.png')
+            plt.clf()
+
     def new_way(self, way, key):
         if key == 'st':
             way = way+"stable\\"
@@ -469,7 +493,7 @@ class Original_sist(object):
             self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp.y, t = tmp.t)
             # self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
              
-    def sost_in_fi(self, key = 'all'):
+    def sost_in_fi(self, key = 'st'):
         n = self.N
         name = "new_life\\res\\n_\\"
         
@@ -495,6 +519,7 @@ class Original_sist(object):
         
 
         self.show_sost(arr = res_fi, key=key, res = res)
+        ors.all_new_lam(key)
         # ress = self.order_parameter(res_fi)
         # self.show_sost(arr = ress, key=key)
 
@@ -604,12 +629,4 @@ if __name__ == "__main__":
     tmp = [5 , 1, 1]
     ors = Original_sist(p = tmp, fi = 0)
     # ors.dinamic(params=[[np.pi, 0.0, 1, 2, 2]])
-    # ors.sost_in_fi(key='all')
-    
-    # ors.check_lams_full([2.474646, 2.636232, 1, 2, 1.0472])
-    ors.all_new_lam("new_life\\res\\n_5\\stable_5.txt", 'st')
-
-    # np.angel(fin - fi0)
-    # параметр порядка
-
-    # посмотреть 2х кластерное разбиение но со второй гармоникой
+    ors.sost_in_fi(key='st')
