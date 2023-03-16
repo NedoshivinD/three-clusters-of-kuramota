@@ -220,7 +220,7 @@ class Equilibrium_states(object):
                             tmp = self.eigenvalues(j)
                             lam = []
                             for k in range(len(tmp)):
-                                lam.append(tmp[k])
+                                lam.append(np.round(tmp[k],4))
                             z = 0
                             o = 0
                             for l in tmp.real:

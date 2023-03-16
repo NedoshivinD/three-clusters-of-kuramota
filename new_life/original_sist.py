@@ -185,9 +185,22 @@ class Original_sist(object):
             start_point[K+M+i+N] = v3
         lam = self.eigenvalues_full(start_point)
         # print("par: " + str(par) + "\n" +"lam: " + str(lam))
-        self.save_lamdas(lam)
+        # self.save_lamdas(lam)
+        res_lam = []
+        for l in lam:
+            res_lam.append(np.round(complex(l),4))
+        return res_lam
 
-    def all_new_lam(self, way):
+    def all_new_lam(self, way, key):
+        res = []
+        tmp=[]
+        with open(way) as file:
+            for line in file:
+                tmp.append(self.razb_str(line.rstrip()))
+        for x in tmp:
+            res.append(self.check_lams_full(x))
+
+        self.save_lamdas(res,key)
         return 0
 
 
@@ -210,8 +223,8 @@ class Original_sist(object):
             old_lam.append(tmp)
         
         with open(way_new,"w",encoding="utf-8") as file:
-            file.write(str(new_lam))
-            file.write(str(res[0]))
+            for i in range(len(new_lam)):
+                file.write(str(new_lam[i]) + '\t' + str(old_lam[i]) + '\n')
 
     def razb_str_lam(self, str):
         res = []
@@ -501,7 +514,7 @@ class Original_sist(object):
         fi1 = self.fi1
         fi2 = fi1 - arr[0]
         fi3 = fi1 - arr[1]
-        ress = [fi1, fi2, fi3, arr[2], arr[3], arr[4]]
+        ress = [fi1, fi2, fi3, int(arr[2]), int(arr[3]), arr[4]]
         return ress
                 
     # чистим папку
@@ -593,7 +606,8 @@ if __name__ == "__main__":
     # ors.dinamic(params=[[np.pi, 0.0, 1, 2, 2]])
     # ors.sost_in_fi(key='all')
     
-    ors.check_lams_full([2.474646, 2.636232, 1, 2, 1.0472])
+    # ors.check_lams_full([2.474646, 2.636232, 1, 2, 1.0472])
+    ors.all_new_lam("new_life\\res\\n_5\\stable_5.txt", 'st')
 
     # np.angel(fin - fi0)
     # параметр порядка
