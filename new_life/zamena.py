@@ -116,7 +116,7 @@ class Equilibrium_states(object):
         K = np.linspace(N-2,1,N-2, dtype = 'int')
         
         alpha = np.linspace(0,np.pi,4)
-        self.sost = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.state_equil)([N,k,m,al]) for m in M for k in K for al in alpha if m+k<N)
+        self.sost = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.state_equil)([N,k,m,al]) for k in K for m in M for al in alpha if m+k<N)
         
         self.rec_st_and_unst_st_eq()
         
@@ -140,10 +140,10 @@ class Equilibrium_states(object):
         m = self.m
         
         f = []
-        f.append([-1/m, 0, 1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(-x + alpha) + (-N + M + K)*np.cos(-x+y+alpha)),
-            1/(N*m)*(-(-N+M+K)*np.cos(y + alpha) + (N-M-K)*np.cos(-x+y+alpha))])
-        f.append([0, -1/m, 1/(N*m)*(-M*np.cos(x+alpha) + M*np.cos(-y+x+alpha)),
-            1/(N*m)*(-K*np.cos(-y+alpha)+(-N+M+K)*np.cos(y+alpha)-M*np.cos(-y+x+alpha))])
+        f.append([-1/m, 0, -(M*np.cos(alpha + x) - np.cos(alpha - x + y)*(K + M - N) + K*np.cos(alpha - x))/(N*m),
+             -(np.cos(alpha - x + y)*(K + M - N) - np.cos(alpha + y)*(K + M - N))/(N*m)])
+        f.append([0, -1/m, (M*np.cos(alpha + x - y) - M*np.cos(alpha + x))/(N*m),
+            -(M*np.cos(alpha + x - y) - np.cos(alpha + y)*(K + M - N) + K*np.cos(alpha - y))/(N*m)])
         f.append([1.0, 0, 0, 0])
         f.append([0, 1.0, 0, 0])
 
