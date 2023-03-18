@@ -72,10 +72,10 @@ class Equilibrium_states(object):
         return res
 
     #поиск состояний равновесия для определенного параметра
-    def state_equil(self,NMKA=[3,1,1,np.pi/2]):
+    def state_equil(self,NKMA=[3,1,1,np.pi/2]):
         all_sol = [] 
         all_sol_full = []
-        self.N,self.M,self.K,self.alpha = NMKA
+        self.N,self.K,self.M,self.alpha = NKMA
         ran_x=[0,2*np.pi-0.001]
         ran_y=[0,2*np.pi-0.001]
         
@@ -91,19 +91,19 @@ class Equilibrium_states(object):
                 xar = round(xar,6)
                 yar = round(yar,6)
                 if (xar>=0 and xar<2*np.pi) and (yar<2*np.pi and yar>=0):
-                    if [round(xar,3),round(yar,3),self.M,self.K,round(self.alpha,5)] not in all_sol:
+                    if [round(xar,3),round(yar,3),self.K,self.M,round(self.alpha,5)] not in all_sol:
                         if round(xar,2) == round(2*np.pi,2) and  round(yar,2) != round(2*np.pi,2):
-                            all_sol_full.append([0.0,yar,self.M,self.K,round(self.alpha,5)])
-                            all_sol.append([0.0,round(yar,3),self.M,self.K,round(self.alpha,5)])
+                            all_sol_full.append([0.0,yar,self.K,self.M,round(self.alpha,5)])
+                            all_sol.append([0.0,round(yar,3),self.K,self.M,round(self.alpha,5)])
                         elif round(yar,2) == round(2*np.pi,2) and round(xar,2) != round(2*np.pi,2):
-                            all_sol_full.append([xar,0.0,self.M,self.K,round(self.alpha,5)])
-                            all_sol.append([round(xar,3),0.0,self.M,self.K,round(self.alpha,5)])
+                            all_sol_full.append([xar,0.0,self.K,self.M,round(self.alpha,5)])
+                            all_sol.append([round(xar,3),0.0,self.K,self.M,round(self.alpha,5)])
                         elif (round(xar,2) == round(2*np.pi,2) and round(yar,2) == round(2*np.pi,2)):
-                            all_sol_full.append([0.0,0.0,self.M,self.K,round(self.alpha,5)])
-                            all_sol.append([0.0,0.0,self.M,self.K,round(self.alpha,5)])
+                            all_sol_full.append([0.0,0.0,self.K,self.M,round(self.alpha,5)])
+                            all_sol.append([0.0,0.0,self.K,self.M,round(self.alpha,5)])
                         else:
-                            all_sol_full.append([xar,yar,self.M,self.K,round(self.alpha,5)])
-                            all_sol.append([round(xar,3),round(yar,3),self.M,self.K,round(self.alpha,5)])
+                            all_sol_full.append([xar,yar,self.K,self.M,round(self.alpha,5)])
+                            all_sol.append([round(xar,3),round(yar,3),self.K,self.M,round(self.alpha,5)])
         
         new_arr = self.__trash_off__(all_sol_full)
         # new_arr = [el for el, _ in groupby(all_sol)]
@@ -116,7 +116,7 @@ class Equilibrium_states(object):
         K = np.linspace(N-2,1,N-2, dtype = 'int')
         
         alpha = np.linspace(0,np.pi,4)
-        self.sost = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.state_equil)([N,m,k,al]) for m in M for k in K for al in alpha if m+k<N)
+        self.sost = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.state_equil)([N,k,m,al]) for m in M for k in K for al in alpha if m+k<N)
         
         self.rec_st_and_unst_st_eq()
         
@@ -135,17 +135,25 @@ class Equilibrium_states(object):
 
     #матрица якоби
     def jakobi(self, param):
-        x,y,M,K,alpha = param
+        x,y,K,M,alpha = param
         N = self.N
         m = self.m
         
         f = []
-        f.append([-1/m, 0, 1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(x - alpha) - (N - M - K)*np.cos(x-y-alpha)),
-            1/(N*m)*(-(N-M-K)*np.cos(y + alpha) + (N-M-K)*np.cos(x-y-alpha))])
-        f.append([0, -1/m, 1/(N*m)*(-M*np.cos(x+alpha) + M*np.cos(y-x-alpha)),
-            1/(N*m)*(-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha))])
+        f.append([-1/m, 0, 1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(-x + alpha) + (-N + M + K)*np.cos(-x+y+alpha)),
+            1/(N*m)*(-(-N+M+K)*np.cos(y + alpha) + (N-M-K)*np.cos(-x+y+alpha))])
+        f.append([0, -1/m, 1/(N*m)*(-M*np.cos(x+alpha) + M*np.cos(-y+x+alpha)),
+            1/(N*m)*(-K*np.cos(-y+alpha)+(-N+M+K)*np.cos(y+alpha)-M*np.cos(-y+x+alpha))])
         f.append([1.0, 0, 0, 0])
         f.append([0, 1.0, 0, 0])
+
+        # f.append([-1/m, 0, 1/(N*m)*(-M*np.cos(x+alpha) - K*np.cos(x - alpha) - (N - M - K)*np.cos(x-y-alpha)),
+        #     1/(N*m)*(-(N-M-K)*np.cos(y + alpha) + (N-M-K)*np.cos(x-y-alpha))])
+        # f.append([0, -1/m, 1/(N*m)*(-M*np.cos(x+alpha) + M*np.cos(y-x-alpha)),
+        #     1/(N*m)*(-K*np.cos(y-alpha)-(N-M-K)*np.cos(y+alpha)-M*np.cos(y-x-alpha))])
+        # f.append([1.0, 0, 0, 0])
+        # f.append([0, 1.0, 0, 0])
+        
         arr = np.array(f)
         return(arr)
 
@@ -186,6 +194,14 @@ class Equilibrium_states(object):
 
             derivatives = np.append(derivatives,tmp_arr)
 
+        # eye = np.eye(N)
+        # block1 = -1/m * eye
+        # block2 = derivatives
+        # block3 = eye
+        # block4 = np.zeros((N,N))
+        # res = np.block([[block1,block2],[block3,block4]])
+        # return res
+
         res = np.array([])
         for i in range(N):
             string_arr = np.zeros(2*N)
@@ -198,6 +214,7 @@ class Equilibrium_states(object):
             string_arr[i] = 1
             res=np.append(res, string_arr)
         res = res.reshape(2*N,2*N)
+        print(res)
         return res
     
     def eigenvalues_full(self,start_point):
@@ -241,7 +258,7 @@ class Equilibrium_states(object):
     #динамика для одной точки
     def dinamic(self,params = [2.094395, 4.18879, 1, 1, 2.0943951023931953]):
         start_point=np.zeros(4)
-        start_point[0],start_point[1], self.M,self.K,self.alpha = params 
+        start_point[0],start_point[1], self.K,self.M,self.alpha = params 
         start_point[0] = start_point[0]+eps
         start_point[1] = start_point[1]+eps
         
@@ -256,7 +273,7 @@ class Equilibrium_states(object):
     #динамика, но сохраняем
     def rec_dinamic(self,way,z=1,params = [2.094395, 4.18879, 1, 1, 2.0943951023931953]):
         start_point=np.zeros(4)
-        start_point[0],start_point[1], self.M,self.K,self.alpha = params 
+        start_point[0],start_point[1], self.K,self.M,self.alpha = params 
         start_point[0] += eps
         start_point[1] += eps
         tmp = integrate.odeint(self.syst, start_point, self.t)
@@ -359,9 +376,9 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [3 ,1]
+    tmp = [5 ,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     es.parall_st_eq() #подсчет всех состояний
-    # es.show_sost(key='all') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   

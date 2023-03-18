@@ -18,34 +18,32 @@ def iter_din(t, start_point , par):
 
     s = 0
     
-    
+    lens = len(phi)
     f = np.zeros(len(phi)*2)
     
     for j in range(len(phi)):
         for phi_i in phi:
-            s += np.sin(phi_i - phi[j] + alpha)
+            s += np.sin(phi_i - phi[j] - alpha)
         
-        f[j] = round(s + w + v[j], 7)
-        
+        f[j] = round(s/lens + w - v[j], 7)
         f[j+len(phi)] = round(v[j], 7)
+
+        # f[j]=s/lens + w + v[j]
+        # f[j+len(phi)] = v[j]
         
         
     return f
         
 def din_thr_map(phi,v,par,t,t_max):
-    res = []
     start_point = np.zeros(len(phi)*2)
     for i in range(len(phi)):
         start_point[i] = phi[i]
         start_point[i+len(phi)] = v[i]
-        
-    
-    res = solve_ivp(iter_din,[0,t_max],start_point, args=[par],rtol= 10e-13,atol=10e-13) # t_eval=t,
     
     
+    res = solve_ivp(iter_din,[0,t_max],start_point, args=[par],rtol= 10e-10,atol=10e-10) # t_eval=t,
     
-    
-    return res
+    return res.y
 
 def up_arr(arr,N,num_elems):
     res = np.array([])
@@ -71,20 +69,21 @@ def work(param):
     
     phi,eps,alpha,t_max = param
     
-    for i in range(len(phi)-len(phi)//2):#
-        phi[i] += eps
-    
     v = np.zeros(len(phi))
+
+    for i in range(len(phi)):#
+        phi[i] += eps
+        v[i] += eps
+    
     w = 1
     t = np.linspace(0,t_max,t_max)
     a = din_thr_map(phi,v,[alpha,w],t,t_max)
     
     matrix = np.array([])
     for i in range(len(phi)):
-        matrix = np.append(matrix,a.y[i])
+        matrix = np.append(matrix,a[i])
     
 
-    matrix = np.angle(np.exp(1j*matrix))
     matrix = matrix.reshape((len(phi),len(matrix)//len(phi)))
 
     l = len(phi) - 1
@@ -94,9 +93,12 @@ def work(param):
         l-=1
 
     
-    print(matrix)
+    # matrix[5:10] = 1e-10
+    # matrix[12] = 1e10
     
-    plt.imshow(matrix, cmap ='hot', interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
+    matrix = np.angle(np.exp(1j*matrix))
+    print(matrix)
+    plt.imshow(matrix, cmap ='hot',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
     plt.show()
     
     
@@ -105,20 +107,20 @@ def work(param):
 
 if __name__ == "__main__":
     
-    eps = 0# 1e-17
+    eps = 0#1e-17
     
-    low_arr = [1.823477, 3.646953, 1, 2, 2.0944]
+    low_arr = [3.646953, 1.823477, 2, 2, 2.0944]	#[1.823477, 3.646953, 1, 2, 2.0944]
     
-    phi1 = up_arr(low_arr,5,20)
+    phi1 = up_arr(low_arr,5,5)
     alpha = low_arr[4]
-    t = 10000
+    t_amx = 10000
     
     # phi = [0, 0, 0, 0, 1.823477, 1.823477, 1.823477, 1.823477, 1.823477, 1.823477, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953] #[0,0,0,0, 1.823477, 1.823477,1.823477, 1.823477,1.823477, 1.823477, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953, 3.646953] 
     # alpha = 0
     
         
     # print(phi1)
-    work([phi1,eps,alpha,t])
+    work([phi1,eps,alpha,t_amx])
     
     
     

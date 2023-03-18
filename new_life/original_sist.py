@@ -45,11 +45,11 @@ class Original_sist(object):
         fi1,fi2,fi3,v,w,u = param #[x,y,w,v] - точки
         f = np.zeros(6)
         # fi1 with 1 dot
-        f[0] = 1/m*(omega + 1/N * ((- K)*np.sin(alpha) + M*np.sin(fi2 - fi1 + alpha) + (N-M-K)*np.sin(fi3 - fi1 + alpha)) - v)
+        f[0] = 1/m*(omega + 1/N * ((- K)*np.sin(alpha) + M*np.sin(fi2 - fi1 - alpha) + (N-M-K)*np.sin(fi3 - fi1 - alpha)) - v)
         # fi2 with 1 dot
-        f[1] = 1/m*(omega + 1/N * (-M*np.sin(alpha) + K*np.sin(fi1 - fi2 + alpha) + (N-M-K)*np.sin(fi3 - fi2 + alpha)) - w)
+        f[1] = 1/m*(omega + 1/N * (-M*np.sin(alpha) + K*np.sin(fi1 - fi2 - alpha) + (N-M-K)*np.sin(fi3 - fi2 - alpha)) - w)
         # fi3 with 1 dot
-        f[2] = 1/m*(omega + 1/N * (-(N-M-K)*np.sin(alpha) + K*np.sin(fi1 - fi3 + alpha) + M*np.sin(fi2 - fi3 + alpha)) - u)
+        f[2] = 1/m*(omega + 1/N * (-(N-M-K)*np.sin(alpha) + K*np.sin(fi1 - fi3 - alpha) + M*np.sin(fi2 - fi3 - alpha)) - u)
         # fi1 with 2 dots
         f[3] = v
         # fi2 with 2 dots
@@ -78,9 +78,9 @@ class Original_sist(object):
         
         for j in range(N):
             for phi_i in phi:
-                s += np.sin(phi_i - phi[j] + alpha)
+                s += np.sin(phi_i - phi[j] - alpha)
             
-            f[j] = s + omega + v[j]
+            f[j] = 1/N*s + omega - v[j]
             
             f[j+N] = v[j]
             
@@ -96,21 +96,21 @@ class Original_sist(object):
         f[0]=[-1/m,
             0,
             0,
-            1/m*(1/N * (-M*np.cos(fi2 - fi1 + alpha) - (N-M-K)*np.cos(fi3 - fi1 + alpha))),
-            1/m*(1/N * (M*np.cos(fi2 - fi1 + alpha))),
-            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi1 + alpha))),]
+            1/m*(1/N * (-M*np.cos(fi2 - fi1 - alpha) - (N-M-K)*np.cos(fi3 - fi1 - alpha))),
+            1/m*(1/N * (M*np.cos(fi2 - fi1 - alpha))),
+            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi1 - alpha))),]
         f[1]=[0, 
             -1/m, 
             0,
-            1/m*(1/N * (K*np.cos(fi1 - fi2 + alpha))),
-            1/m*(1/N * (- K*np.cos(fi1 - fi2 + alpha) - (N-M-K)*np.cos(fi3 - fi2 + alpha))),
-            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi2 + alpha)))]
+            1/m*(1/N * (K*np.cos(fi1 - fi2 - alpha))),
+            1/m*(1/N * (- K*np.cos(fi1 - fi2 - alpha) - (N-M-K)*np.cos(fi3 - fi2 - alpha))),
+            1/m*(1/N * ((N-M-K)*np.cos(fi3 - fi2 - alpha)))]
         f[2]=[0, 
             0, 
             -1/m,
-            1/m*(1/N * (K*np.cos(fi1 - fi3 + alpha))),
-            1/m*(1/N * (M*np.cos(fi2 - fi3 + alpha))),
-            1/m*(1/N * (-K*np.cos(fi1 - fi3 + alpha) - M*np.cos(fi2 - fi3 + alpha)))]
+            1/m*(1/N * (K*np.cos(fi1 - fi3 - alpha))),
+            1/m*(1/N * (M*np.cos(fi2 - fi3 - alpha))),
+            1/m*(1/N * (-K*np.cos(fi1 - fi3 - alpha) - M*np.cos(fi2 - fi3 - alpha)))]
         f[3]=[1.0, 0, 0, 0, 0, 0]
         f[4]=[0, 1.0, 0, 0, 0, 0]
         f[5]=[0, 0, 1.0, 0, 0, 0]
@@ -135,10 +135,10 @@ class Original_sist(object):
                         if k == j:
                             continue
                         else:
-                            sum+=np.cos(phi[k]-phi[j]+alpha)
+                            sum+=np.cos(phi[k]-phi[j]-alpha)
                     tmp_arr[j] = - 1/(m*N) * sum
                 else:
-                    tmp_arr[j] = 1/(m*N) * np.cos(phi[j]-phi[i]+alpha)
+                    tmp_arr[j] = 1/(m*N) * np.cos(phi[j]-phi[i]-alpha)
 
             derivatives = np.append(derivatives,tmp_arr)
         derivatives = derivatives.reshape((N,N))
@@ -149,6 +149,7 @@ class Original_sist(object):
         block3 = eye
         block4 = np.zeros((N,N))
         res = np.block([[block1,block2],[block3,block4]])
+        print(res)
         return res
     
     def eigenvalues_full(self,start_point):
@@ -374,9 +375,10 @@ class Original_sist(object):
             way = way + "range_zero"
         elif key == 'all':
             way = way + "all"
-        way += "\\lams\\"
+        way += "\\lams"
         self.create_path(way)
         self.clean_path(way)
+        way += "\\"
         for i in range(len(old_lams)):
             old_lam = np.array(old_lams[i])
             new_lam = np.array(new_lams[i])
