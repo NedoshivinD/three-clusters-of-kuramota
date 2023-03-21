@@ -14,7 +14,7 @@ import ast
 
 col_razb = 10
 MAX_GRAPH = 100
-eps = 0.1
+eps = 0
 Max_time = 100
 
 
@@ -73,10 +73,10 @@ class Original_sist(object):
             v[i] = start_point[i+N]
         f = np.zeros(2*N)
 
-        s = 0
         f = np.zeros(2*N)
         
         for j in range(N):
+            s = 0
             for phi_i in phi:
                 s += np.sin(phi_i - phi[j] - alpha)
             
@@ -272,7 +272,7 @@ class Original_sist(object):
             key = 'un_st'
         else:
             key = 'rz'
-        print("i: ", i, "Lamdas: ", lam,"\n", " Params: ", params, " key: ", key)
+        # print("i: ", i, "Lamdas: ", lam,"\n", " Params: ", params, " key: ", key)
         return key
 
     #динамика для одной точки
@@ -498,15 +498,19 @@ class Original_sist(object):
     def sost_in_fi(self, key = 'st'):
         n = self.N
         name = "new_life\\res\\n_\\"
-        
+        way = f"new_life\\res\\n_{self.N}\\"
         if key == 'st':
             name = name+"stable_.txt"
+            way = way + "stable\\"
         elif key == "un_st":
             name = name + "non_stable_.txt"
+            way = way + "unstable\\"
         elif key == "all":
             name = name + "res_n_.txt"
+            way = way + "all\\"
         elif key == "rz":
             name = name + "range_zero_.txt"
+            way = way + "range_zero\\"
         else:
             print("wrong key")
             return
@@ -519,9 +523,25 @@ class Original_sist(object):
         res = self.razbor_txt(name)
         res_fi = self.anti_zamena(res)
         
-
+        way = way + "map\\"
+        
         self.show_sost(arr = res_fi, key=key, res = res)
         ors.all_new_lam(key)
+        tmp_count = 0
+        for x in res:
+            phi1 = self.up_arr(x,5,5)
+            alpha = x[4]
+            t_amx = 10000
+            
+            # phi1 = [2.474646, 2.474646, 2.474646, 0, 0]
+            # alpha = 0
+            
+                
+            # print(phi1)
+            print(str(tmp_count+1)+":")
+            self.plot_warm_map([phi1,eps,alpha,t_amx], way,tmp_count)
+            tmp_count+=1
+
         # ress = self.order_parameter(res_fi)
         # self.show_sost(arr = ress, key=key)
 
@@ -626,9 +646,106 @@ class Original_sist(object):
         #     sum = 1/3 * np.sqrt(sumr ** 2 + sumi ** 2)
         #     res.append(sum)
         return res
+    
+    #тепловая карта----------------------------------------------------------------------------------
+    def iter_din(self, t, start_point , par):
+    
+        alpha,w = par
+        phi = np.zeros(len(start_point)//2)
+        v = np.zeros(len(start_point)//2)
+        
+        for i in range(len(start_point)//2):
+            phi[i] = start_point[i]
+            v[i] = start_point[i+len(phi)]
+
+        s = 0
+        
+        lens = len(phi)
+        f = np.zeros(len(phi)*2)
+        
+        for j in range(len(phi)):
+            for phi_i in phi:
+                s += np.sin(phi_i - phi[j] - alpha)
+            
+            # f[j] = round(s/lens + w - v[j], 7)
+            # f[j+len(phi)] = round(v[j], 7)
+
+            f[j]=s/lens + w - v[j]
+            f[j+len(phi)] = v[j]
+
+            s = 0
+        # phi[:] = 0
+        # v[:] = 0
+        return f
+        
+    def din_thr_map(self, phi,v,par,t,t_max):
+        start_point = np.zeros(len(phi)*2)
+        for i in range(len(phi)):
+            start_point[i] = phi[i]
+            start_point[i+len(phi)] = v[i]
+
+        res = solve_ivp(self.iter_din,[0,t_max],start_point, args=[par],rtol= 10e-10,atol=10e-10) # t_eval=t,
+        
+        return res.y
+
+    def up_arr(self, arr,N,num_elems):
+        res = np.array([])
+        tmp = np.zeros(num_elems//N)
+        
+        if N>num_elems:
+            num_elems = N
+        
+        razb = [int(arr[2]),int(arr[3]),int(N-arr[2]-arr[3])]
+        
+        for i in range(razb[0]):
+            res = np.append(res,tmp)
+        
+        for i in range(len(razb[1:3])):
+            tmp = tmp+arr[i]
+            for j in range(razb[i+1]):
+                res = np.append(res,tmp)
+            tmp = tmp-arr[i]
+        return res
+
+    def plot_warm_map(self, param, way, count):
+    
+        phi,eps,alpha,t_max = param
+        
+        v = np.zeros(len(phi))
+
+        for i in range(len(phi)):#
+            phi[i] += eps
+            v[i] += eps
+        
+        w = 1
+        t = np.linspace(0,t_max,t_max)
+        a = self.din_thr_map(phi,v,[alpha,w],t,t_max)
+        
+        matrix = np.array([])
+        for i in range(len(phi)):
+            matrix = np.append(matrix,a[i])
+        
+        matrix = matrix.reshape((len(phi),len(matrix)//len(phi)))
+
+        l = len(phi) - 1
+        while l>=0:
+            # if l != 19:
+            matrix[l] = matrix[l] - matrix[0]
+            l-=1
+
+        matrix = np.angle(np.exp(1j*matrix))
+        print(matrix)
+        plt.imshow(matrix, cmap ='hot',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
+
+        plt.savefig(way + f'graph_{count+1}.png')
+        plt.clf()
+
+
+    #---------------------------------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     tmp = [5 , 1, 1]
     ors = Original_sist(p = tmp, fi = 0)
     # ors.dinamic(params=[[np.pi, 0.0, 1, 2, 2]])
-    ors.sost_in_fi(key='st')
+    ors.sost_in_fi(key='un_st')

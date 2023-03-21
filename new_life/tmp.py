@@ -41,8 +41,7 @@ def din_thr_map(phi,v,par,t,t_max):
     for i in range(len(phi)):
         start_point[i] = phi[i]
         start_point[i+len(phi)] = v[i]
-    
-    
+
     res = solve_ivp(iter_din,[0,t_max],start_point, args=[par],rtol= 10e-10,atol=10e-10) # t_eval=t,
     
     return res.y
@@ -62,7 +61,6 @@ def up_arr(arr,N,num_elems):
     for i in range(len(razb[1:3])):
         tmp = tmp+arr[i]
         for j in range(razb[i+1]):
-                    
             res = np.append(res,tmp)
         tmp = tmp-arr[i]
     return res
@@ -85,7 +83,6 @@ def work(param):
     for i in range(len(phi)):
         matrix = np.append(matrix,a[i])
     
-
     matrix = matrix.reshape((len(phi),len(matrix)//len(phi)))
 
     l = len(phi) - 1
@@ -111,7 +108,7 @@ if __name__ == "__main__":
     
     eps = 0
     
-    low_arr = [4.459709, 2.636232, 2, 1, 3.14159]	# [2.474646, 2.474646, 3, 1, 2.0944]	#[2.474646, 0.0, 2, 2, 2.0944]
+    low_arr = [0.0, 0.0, 3, 1, 0.0]	# [2.474646, 2.474646, 3, 1, 2.0944]	#[2.474646, 0.0, 2, 2, 2.0944]
                                                         #0 0 0 2.474646 2.474646              0 0 2.474646 2.474646 0
     
     phi1 = up_arr(low_arr,5,5)
