@@ -46,23 +46,37 @@ def din_thr_map(phi,v,par,t,t_max):
     
     return res.y
 
-def up_arr(arr,N,num_elems):
+def up_arr(start_phi,arr,N,num_elems):
     res = np.array([])
     tmp = np.zeros(num_elems//N)
     
     if N>num_elems:
         num_elems = N
     
+    
+    
     razb = [arr[2],arr[3],N-arr[2]-arr[3]]
+    
+    for i in range(len(arr[0:2])):
+        if np.pi - np.abs(arr[i])<1e-5 and np.pi - np.abs(arr[i]) > -1e-5:
+            arr[i] = np.pi * np.sign(arr[i])
+    
+    if np.pi - np.abs(arr[4])<1e-5:
+        arr[4] = np.pi * np.sign(arr[4])
+    
+    tmp +=start_phi
     
     for i in range(razb[0]):
         res = np.append(res,tmp)
     
+    tmp-= start_phi
+    
     for i in range(len(razb[1:3])):
         tmp = tmp+arr[i]
         for j in range(razb[i+1]):
-            res = np.append(res,tmp)
+            res = np.append(res, start_phi - tmp)
         tmp = tmp-arr[i]
+    
     return res
     
 def work(param):
@@ -71,9 +85,9 @@ def work(param):
     
     v = np.zeros(len(phi))
 
-    for i in range(len(phi)):#
-        phi[i] += eps
-        v[i] += eps
+    # for i in range(len(phi)):#
+    #     phi[i] += eps
+    #     v[i] += eps
     
     w = 1
     t = np.linspace(0,t_max,t_max)
@@ -94,6 +108,7 @@ def work(param):
     
     # matrix[5:10] = 1e-10
     # matrix[12] = 1e10
+    matrix+=eps
     
     matrix = np.angle(np.exp(1j*matrix))
     print(matrix)
@@ -106,12 +121,14 @@ def work(param):
 
 if __name__ == "__main__":
     
-    eps = 0
-    
-    low_arr = [0.0, 0.0, 3, 1, 0.0]	# [2.474646, 2.474646, 3, 1, 2.0944]	#[2.474646, 0.0, 2, 2, 2.0944]
+    eps = 0#1e-5
+    #[3.141593, 0.0, 2, 2, 3.14159]         40 неуст
+    #[3.141593, 3.141593, 3, 1, 3.14159]    4  уст
+    low_arr = [3.141593, 3.141593, 3, 1, 3.14159]  	# [2.474646, 2.474646, 3, 1, 2.0944]	#[2.474646, 0.0, 2, 2, 2.0944]
                                                         #0 0 0 2.474646 2.474646              0 0 2.474646 2.474646 0
-    
-    phi1 = up_arr(low_arr,5,5)
+    start_phi = 1
+    phi1 = up_arr(start_phi,low_arr,5,5)
+    # phi1[3] +=0.000001
     alpha = low_arr[4]
     t_amx = 10000
     
