@@ -15,6 +15,7 @@ import ast
 col_razb = 10
 MAX_GRAPH = 100
 eps = 0
+eps_map = 1e-3
 Max_time = 100
 
 
@@ -149,7 +150,7 @@ class Original_sist(object):
         block3 = eye
         block4 = np.zeros((N,N))
         res = np.block([[block1,block2],[block3,block4]])
-        print(res)
+        # print(res)
         return res
     
     def eigenvalues_full(self,start_point):
@@ -528,8 +529,10 @@ class Original_sist(object):
         self.show_sost(arr = res_fi, key=key, res = res)
         ors.all_new_lam(key)
         tmp_count = 0
+        start_phi = 1
+        
         for x in res:
-            phi1 = self.up_arr(x,5,5)
+            phi1 = self.up_arr(start_phi,x,5,5)
             alpha = x[4]
             t_amx = 10000
             
@@ -660,17 +663,17 @@ class Original_sist(object):
 
         s = 0
         
-        lens = len(phi)
+        # lens = len(phi)
         f = np.zeros(len(phi)*2)
         
         for j in range(len(phi)):
             for phi_i in phi:
-                s += np.sin(phi_i - phi[j] - alpha)
+                s += np.sin(phi_i - phi[j]  - alpha)
             
             # f[j] = round(s/lens + w - v[j], 7)
             # f[j+len(phi)] = round(v[j], 7)
 
-            f[j]=s/lens + w - v[j]
+            f[j]=s/self.N + w - v[j]
             f[j+len(phi)] = v[j]
 
             s = 0
@@ -688,7 +691,7 @@ class Original_sist(object):
         
         return res.y
 
-    def up_arr(self, arr,N,num_elems):
+    def up_arr(self, start_phi, arr,N,num_elems):
         res = np.array([])
         tmp = np.zeros(num_elems//N)
         
@@ -697,13 +700,23 @@ class Original_sist(object):
         
         razb = [int(arr[2]),int(arr[3]),int(N-arr[2]-arr[3])]
         
+        for i in range(len(arr[0:2])):
+            if np.pi - np.abs(arr[i]) < 1e-5 and np.pi - np.abs(arr[i]) > -1e-5:
+                arr[i] = np.pi * np.sign(arr[i])
+        if np.pi - np.abs(arr[4])<1e-5:
+            arr[4] = np.pi * np.sign(arr[4])
+        
+        tmp +=start_phi
+    
         for i in range(razb[0]):
             res = np.append(res,tmp)
+        
+        tmp-= start_phi
         
         for i in range(len(razb[1:3])):
             tmp = tmp+arr[i]
             for j in range(razb[i+1]):
-                res = np.append(res,tmp)
+                res = np.append(res, start_phi -tmp)
             tmp = tmp-arr[i]
         return res
 
@@ -713,9 +726,9 @@ class Original_sist(object):
         
         v = np.zeros(len(phi))
 
-        for i in range(len(phi)):#
-            phi[i] += eps
-            v[i] += eps
+        # for i in range(len(phi)):#
+        #     phi[i] += eps
+        #     v[i] += eps
         
         w = 1
         t = np.linspace(0,t_max,t_max)
@@ -729,9 +742,10 @@ class Original_sist(object):
 
         l = len(phi) - 1
         while l>=0:
-            # if l != 19:
             matrix[l] = matrix[l] - matrix[0]
             l-=1
+
+        # matrix += eps_map
 
         matrix = np.angle(np.exp(1j*matrix))
         print(matrix)
@@ -741,7 +755,7 @@ class Original_sist(object):
         plt.clf()
 
 
-    #---------------------------------------------------------------------------------------------------
+    #тепловая карта---------------------------------------------------------------------------------------------------
 
 
 if __name__ == "__main__":
