@@ -163,64 +163,64 @@ class Equilibrium_states(object):
         lam, vect = LA.eig(matrix)
         return lam
     
-    def jacobi_full(self,start_point):
-        N = self.N
-        omega = self.omega
-        m = self.m
-        alpha = self.alpha
-        phi = np.zeros(N)
-        v = np.zeros(N)
-        for i in range(N):
-            phi[i] = start_point[i]
-            v[i] = start_point[i+N]
-        f = np.zeros(2*N)
+    # def jacobi_full(self,start_point):
+    #     N = self.N
+    #     omega = self.omega
+    #     m = self.m
+    #     alpha = self.alpha
+    #     phi = np.zeros(N)
+    #     v = np.zeros(N)
+    #     for i in range(N):
+    #         phi[i] = start_point[i]
+    #         v[i] = start_point[i+N]
+    #     f = np.zeros(2*N)
 
-        s = 0
+    #     s = 0
 
-        derivatives = np.array([])
-        for i in range(N):
-            tmp_arr = np.zeros(N)
-            for j in range(N):
-                sum = 0
-                if j == i:
-                    for k in range(N):
-                        if k == j:
-                            pass
-                        else:
-                            sum+=np.cos(phi[k]-phi[j]+alpha)
-                    tmp_arr[j] = - 1/(m*N) * sum
-                else:
-                    tmp_arr[j] = 1/(m*N) * np.cos(phi[j]-phi[i]+alpha)
+    #     derivatives = np.array([])
+    #     for i in range(N):
+    #         tmp_arr = np.zeros(N)
+    #         for j in range(N):
+    #             sum = 0
+    #             if j == i:
+    #                 for k in range(N):
+    #                     if k == j:
+    #                         pass
+    #                     else:
+    #                         sum+=np.cos(phi[k]-phi[j]+alpha)
+    #                 tmp_arr[j] = - 1/(m*N) * sum
+    #             else:
+    #                 tmp_arr[j] = 1/(m*N) * np.cos(phi[j]-phi[i]+alpha)
 
-            derivatives = np.append(derivatives,tmp_arr)
+    #         derivatives = np.append(derivatives,tmp_arr)
 
-        # eye = np.eye(N)
-        # block1 = -1/m * eye
-        # block2 = derivatives
-        # block3 = eye
-        # block4 = np.zeros((N,N))
-        # res = np.block([[block1,block2],[block3,block4]])
-        # return res
+    #     # eye = np.eye(N)
+    #     # block1 = -1/m * eye
+    #     # block2 = derivatives
+    #     # block3 = eye
+    #     # block4 = np.zeros((N,N))
+    #     # res = np.block([[block1,block2],[block3,block4]])
+    #     # return res
 
-        res = np.array([])
-        for i in range(N):
-            string_arr = np.zeros(2*N)
-            string_arr[i] = - 1 / m
-            for j in range(N):
-                string_arr[N+j] =  derivatives[i+j]
-            res=np.append(res, string_arr)
-        for i in range(N):
-            string_arr = np.zeros(2*N)
-            string_arr[i] = 1
-            res=np.append(res, string_arr)
-        res = res.reshape(2*N,2*N)
-        print(res)
-        return res
+    #     res = np.array([])
+    #     for i in range(N):
+    #         string_arr = np.zeros(2*N)
+    #         string_arr[i] = - 1 / m
+    #         for j in range(N):
+    #             string_arr[N+j] =  derivatives[i+j]
+    #         res=np.append(res, string_arr)
+    #     for i in range(N):
+    #         string_arr = np.zeros(2*N)
+    #         string_arr[i] = 1
+    #         res=np.append(res, string_arr)
+    #     res = res.reshape(2*N,2*N)
+    #     print(res)
+    #     return res
     
-    def eigenvalues_full(self,start_point):
-        matrix = self.jacobi_full(start_point)
-        lam, vect = LA.eig(matrix)
-        return lam
+    # def eigenvalues_full(self,start_point):
+    #     matrix = self.jacobi_full(start_point)
+    #     lam, vect = LA.eig(matrix)
+    #     return lam
 
     #Сохранение устойчивых и неустойчивых состояний равновесия 
     def rec_st_and_unst_st_eq(self):

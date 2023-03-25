@@ -1,5 +1,5 @@
 import numpy as np
-from requests import patch
+# from requests import patch
 from scipy import integrate
 import matplotlib.pyplot as plt
 from scipy.optimize import root
