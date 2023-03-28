@@ -7,6 +7,7 @@ import joblib
 from numpy import linalg as LA
 import os, shutil
 from itertools import groupby
+from scipy.integrate import solve_ivp
 
 
 #Параметры системы 
@@ -32,7 +33,7 @@ class Equilibrium_states(object):
         self.t = np.linspace(0,100,100)
 
     # Сама система (возможно стоит использовать при расчете состояний равновесия)
-    def syst(self,param,t):
+    def syst(self,t,param):
         N = self.N
         M = self.M
         K = self.K
@@ -276,9 +277,12 @@ class Equilibrium_states(object):
         start_point[0],start_point[1], self.K,self.M,self.alpha = params 
         start_point[0] += eps
         start_point[1] += eps
-        tmp = integrate.odeint(self.syst, start_point, self.t)
-        plt.plot(self.t,tmp[:,0],label="x")
-        plt.plot(self.t,tmp[:,1],label="y", linestyle = '--')
+        # tmp = integrate.odeint(self.syst, start_point, self.t)
+        tmp = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1)
+        plt.plot(tmp.t,tmp.y[0],label="x")
+        plt.plot(tmp.t,tmp.y[1],label="y", linestyle = '--')
+        # plt.plot(self.t,tmp[:,0],label="x")
+        # plt.plot(self.t,tmp[:,1],label="y", linestyle = '--')
         plt.xlim(0, 100)
         plt.ylim(-10, 20)
         plt.legend()
@@ -379,6 +383,6 @@ if __name__ == "__main__":
     tmp = [5 ,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    es.parall_st_eq() #подсчет всех состояний
-    # es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    # es.parall_st_eq() #подсчет всех состояний
+    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   
