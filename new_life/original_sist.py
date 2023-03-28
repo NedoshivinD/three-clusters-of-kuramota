@@ -709,7 +709,7 @@ class Original_sist(object):
         tmp +=start_phi
     
         for i in range(razb[0]):
-            res = np.append(res,tmp)
+            res = np.append(res,tmp+eps_map)
         
         tmp-= start_phi
         
