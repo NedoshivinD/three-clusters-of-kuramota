@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 import os, shutil, sys
 from scipy import integrate
 
-Max_time = 1000
-max_el = 10
+Max_time = 100
+max_el = 50
+max_k = 1
 N_JOB = 4
-eps = 0#.0001
-speed = 0.000000000000000000000000000000000000001
-
-
+eps = 0.001
+speed = 0.01
+#4.459709, 2.636232
 
 class Dinamic(object):
     
@@ -25,6 +25,12 @@ class Dinamic(object):
         self.ust = []
         self.un_ust = []
         self.t = np.linspace(0,100,Max_time)
+        self.k = 1
+        self.x_arr = np.linspace(-np.pi,np.pi,max_el)
+        self.y_arr = np.linspace(-np.pi,np.pi,max_el)
+        self.al_arr = np.linspace(0, np.pi, max_el//2)
+        self.k_arr = np.linspace(1,max_k, max_k)
+        self.params = []
 
     def syst(self, t, y0):
         N = self.N
@@ -32,54 +38,60 @@ class Dinamic(object):
         K = self.K
         alpha = self.alpha
         m = self.m
+        k = self.k
         
         x,y,v,w = y0 #[x,y,w,v] - точки
         f = np.zeros(4)
-        # x with 1 dot
-        f[0] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
-        # y with 1 dot
-        f[1] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         # x with 2 dots
-        f[2] = v
+        f[0] = v
         # y with 2 dots
-        f[3] = w
+        f[1] = w
+        # x with 1 dot
+        f[2] = 1/m*(k/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
+        # y with 1 dot
+        f[3] = 1/m*(k/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         
         return f
      
     def calculation(self, x, par):
         M = self.M
         K = self.K
-        self.alpha = par
+        self.alpha = par[0]
+        self.k = par[1]
         # way = way + "\\"
+        way = f"new_life\\res\\n_{ors.N}\\dinamic_sost\\"
         start_point=np.zeros(4)
         start_point[0] = x[0] + eps
         start_point[1] = x[1] + eps
         start_point[2] = speed
-        start_point[3] = speed
-        
-        res = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1)
-        
-        return [res.y[0],res.y[1], res.t]
+        start_point[3] = speed 
+        res = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1, rtol = 1e-7, atol = 1e-7)
+        # self.save_fig_2([res.y[0],res.y[1], res.t],way)
+        # params.append([round(x[0],5), round(x[1],5), self.K, self.M, round(self.alpha), self.k])
+        return [res.y[0],res.y[1], res.t, self.alpha,self.k]
 
     def paral(self, way):
-        x_arr = np.linspace(-np.pi,np.pi,max_el)
-        y_arr = np.linspace(-np.pi,np.pi,max_el)
-        al_arr = np.linspace(0, np.pi, max_el)
+        
         self.create_path(way)
         self.clean_path(way)
 
-        self.sost = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.calculation)([x, y], al) 
-                                                    for x in x_arr for y in y_arr for al in al_arr)
+        self.sost = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.calculation)([x, y], [al,k]) 
+                                                    for x in self.x_arr for y in self.y_arr for al in self.al_arr for k in self.k_arr)
         # print(self.sost())
         self.save_fig(self.sost, way)
+        # print("kek")
 
     def save_fig(self, res, way):
         way = way + "\\"
         for i in range(len(res)):
-            plt.plot(res[i][2],np.sin(res[i][0]),label="x")
-            plt.plot(res[i][2],np.sin(res[i][1]),label="y", linestyle = '--')
+            param = [np.round(res[i][0][0],5), np.round(res[i][1][0],5), self.K, self.M, res[i][3],res[i][4]]
+            plt.plot(res[i][2],np.angle(np.exp(1j*res[i][0])),label="x")
+            plt.plot(res[i][2],np.angle(np.exp(1j*res[i][1])),label="y", linestyle = '--')
             plt.xlim(0, 100)
-            plt.ylim(-1.5, 1.5)
+            plt.ylim(-np.pi-0.2, np.pi+0.2)
+            plt.text(x=50,y=np.pi+0.3, horizontalalignment = 'center', s="x0 = " + str(param[0]) + ", y0 = " + str(param[1])
+                    +  ", K = " + str(param[2]) + ", M = " + str(param[3]) + ", alpha = " + str(param[4])
+                     + ", k = " + str(param[5]))
             plt.legend()
             plt.savefig(way + f'graph_{i+1}.png')
             # plt.show()
@@ -105,18 +117,15 @@ if __name__ == "__main__":
     tmp = [5, 1, 1]
     ors = Dinamic(p = tmp)
     way = f"new_life\\res\\n_{ors.N}\\dinamic_sost"
-    # ors.calculation([np.pi, np.pi/2],np.pi/3)
-    # ors.paral(f"new_life\\res\\n_{ors.N}\\dinamic_sost")
-    res = ors.calculation([4.459709, 2.636232], 2.0944)
-    ors.clean_path(way)
-    way = way + "\\"
-   
-    ors.save_fig(res, way)
-    plt.plot(res[2],res[0], label="x") #np.angle(np.exp(1j*res[0]))
-    plt.plot(res[2],res[1], label="y", linestyle = '--')
-    # plt.xlim(0, 50)
-    # plt.ylim(-np.pi, np.pi)
-    plt.legend()
-    # plt.savefig(way + f'graph_{1}.png')
-    plt.show()
-    # plt.clf()
+    ors.paral(way)
+    
+    # res = ors.calculation([-3.14059, -3.14259],[3.141592653589793,1])
+    # plt.plot(res[2],np.angle(np.exp(1j*res[0])),label="x")
+    # plt.plot(res[2],np.angle(np.exp(1j*res[1])),label="y", linestyle = '--')
+    # plt.xlim(0, 100)
+    # plt.ylim(-np.pi-0.2, np.pi+0.2)
+    # par = [-3.14059, -3.14259, 2, 1, 3.141592653589793, 1.0]
+    # plt.text(x=50,y=np.pi+0.3, horizontalalignment = 'center', s="x = " + str(par[0]) + ", y = " + str(par[1]) +  ", K = " + str(par[2]) + ", M = " + str(par[3]) + ", alpha = " + str(par[4]) + ", k = " + str(par[5]))
+    # plt.legend()
+    # plt.show()
+    

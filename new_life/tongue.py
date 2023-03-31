@@ -129,7 +129,7 @@ class Tongue(Reduc,Orig):
         eig_old, sost_ravn = self.__iter_sr_eig__()
         index = self.__get_index__(eig_old[1])
 
-        # self.__paint_lams__(eig_old)
+        self.__paint_lams__(eig_old)
             
         
         f = 1
@@ -137,7 +137,7 @@ class Tongue(Reduc,Orig):
             self.alpha+= self.h
             eig_new,sost_ravn = self.__iter_sr_eig__()
             f = self.__change_h__(eig_new[1],eig_old[1],index)
-            self.__paint_lams__(eig_old)
+            # self.__paint_lams__(eig_old)
             eig_old = eig_new
             
         # print(it)
@@ -156,7 +156,7 @@ class Tongue(Reduc,Orig):
 
 if __name__ == "__main__":
     tmp = [5 ,1, 1]
-    par = [4.459709, 1.823477, 1, 2, 2.0944] #[2.636232, 4.459709, 2, 2, 1.0472] 32 [2.636232, 4.459709, 2, 2, 1.0472]	
-    h = 0.5
+    par = [2.636232, 4.459709, 2, 2, 1.0472] #[2.636232, 4.459709, 2, 2, 1.0472] 32 [2.636232, 4.459709, 2, 2, 1.0472]	
+    h = -0.5
     tong = Tongue(tmp,par,h)
     tong.work()
