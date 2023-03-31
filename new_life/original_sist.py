@@ -673,8 +673,8 @@ class Original_sist(object):
             # f[j] = round(s/lens + w - v[j], 7)
             # f[j+len(phi)] = round(v[j], 7)
 
-            f[j]=s/self.N + w - v[j]
-            f[j+len(phi)] = v[j]
+            f[j] = v[j]
+            f[j+len(phi)]=s/self.N + w - v[j]
 
             s = 0
         # phi[:] = 0

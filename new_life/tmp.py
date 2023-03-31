@@ -28,8 +28,8 @@ def iter_din(t, start_point , par):
         # f[j] = round(s/lens + w - v[j], 7)
         # f[j+len(phi)] = round(v[j], 7)
 
-        f[j]=s/lens + w - v[j]
-        f[j+len(phi)] = v[j]
+        f[j] = v[j]
+        f[j+len(phi)]=s/lens + w - v[j]
 
         s = 0
     # phi[:] = 0
@@ -46,7 +46,7 @@ def din_thr_map(phi,v,par,t,t_max):
     
     return res.y
 
-def up_arr(start_phi,arr,N,num_elems):
+def up_arr(start_phi,arr,N,num_elems,eps):
     res = np.array([])
     tmp = np.zeros(num_elems//N)
     
@@ -67,7 +67,7 @@ def up_arr(start_phi,arr,N,num_elems):
     tmp +=start_phi
     
     for i in range(razb[0]):
-        res = np.append(res,tmp)
+        res = np.append(res,tmp+eps)
     
     tmp-= start_phi
     
@@ -118,7 +118,16 @@ def work(param):
     
     # plt.savefig('tmp.svg')
     
-
+def heat_map(par):
+    low_arr = par
+    start_phi = 1
+    eps = 1e-7
+    phi1 = up_arr(start_phi,low_arr,5,5,eps)
+    alpha = low_arr[4]
+    t_amx = 10000
+    
+    work([phi1,eps,alpha,t_amx])
+    
 if __name__ == "__main__":
     
     eps = 0#1e-5
@@ -127,7 +136,8 @@ if __name__ == "__main__":
     low_arr = [3.141593, 3.141593, 3, 1, 3.14159]  	# [2.474646, 2.474646, 3, 1, 2.0944]	#[2.474646, 0.0, 2, 2, 2.0944]
                                                         #0 0 0 2.474646 2.474646              0 0 2.474646 2.474646 0
     start_phi = 1
-    phi1 = up_arr(start_phi,low_arr,5,5)
+    eps = 1e-7
+    phi1 = up_arr(start_phi,low_arr,5,5,eps)
     # phi1[3] +=0.000001
     alpha = low_arr[4]
     t_amx = 10000

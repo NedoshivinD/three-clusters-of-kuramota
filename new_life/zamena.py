@@ -42,14 +42,14 @@ class Equilibrium_states(object):
         
         x,y,v,w = param #[x,y,w,v] - точки
         f = np.zeros(4)
-        # x with 1 dot
-        f[0] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
-        # y with 1 dot
-        f[1] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
-        # x with 2 dots
-        f[2] = v
-        # y with 2 dots
-        f[3] = w
+        # x with 1 dots
+        f[0] = v
+        # y with 1 dots
+        f[1] = w
+        # x with 2 dot
+        f[2] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
+        # y with 2 dot
+        f[3] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         
         return f
     
