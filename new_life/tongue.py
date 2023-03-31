@@ -129,25 +129,33 @@ class Tongue(Reduc,Orig):
         eig_old, sost_ravn = self.__iter_sr_eig__()
         index = self.__get_index__(eig_old[1])
 
+
         self.__paint_lams__(eig_old)
+        print(eig_old[1][index])
+        tmp_al = self.alpha
+
+        koord = []
+
+        while self.alpha > 0:
             
+                    
         
-        f = 1
-        while f:
-            self.alpha+= self.h
-            eig_new,sost_ravn = self.__iter_sr_eig__()
-            f = self.__change_h__(eig_new[1],eig_old[1],index)
-            # self.__paint_lams__(eig_old)
-            eig_old = eig_new
+        # f = 1
+        # while f:
+        #     self.alpha+= self.h
+        #     eig_new,sost_ravn = self.__iter_sr_eig__()
+        #     f = self.__change_h__(eig_new[1],eig_old[1],index)
+        #     # self.__paint_lams__(eig_old)
+        #     eig_old = eig_new
             
         # print(it)
-        self.__paint_lams__(eig_new)
-        arr = [sost_ravn.x[0],sost_ravn.x[0],self.K,self.M,self.alpha]
-        print(arr)
-        print('eig_red: ', eig_new[1])
-        print('eig_orig: ', eig_new[0])
-        print('iter: ', arr)
-        hm(arr)
+        # self.__paint_lams__(eig_new)
+        # arr = [sost_ravn.x[0],sost_ravn.x[0],self.K,self.M,self.alpha]
+        # print(arr)
+        # print('eig_red: ', eig_new[1])
+        # print('eig_orig: ', eig_new[0])
+        # print('iter: ', arr)
+        # hm(arr)
         
 
 

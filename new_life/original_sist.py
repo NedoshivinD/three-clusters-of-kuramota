@@ -749,7 +749,7 @@ class Original_sist(object):
 
         matrix = np.angle(np.exp(1j*matrix))
         print(matrix)
-        plt.imshow(matrix, cmap ='hot',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
+        plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
 
         plt.savefig(way + f'graph_{count+1}.png')
         plt.clf()
