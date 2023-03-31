@@ -144,6 +144,9 @@ class Tongue(Reduc,Orig):
         self.__paint_lams__(eig_new)
         arr = [sost_ravn.x[0],sost_ravn.x[0],self.K,self.M,self.alpha]
         print(arr)
+        print('eig_red: ', eig_new[1])
+        print('eig_orig: ', eig_new[0])
+        print('iter: ', arr)
         hm(arr)
         
 
