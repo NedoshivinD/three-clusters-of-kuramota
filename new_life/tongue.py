@@ -6,6 +6,7 @@ from scipy.optimize import root
 from tmp import heat_map as hm
 
 eps = 1e-7
+ogr_sost = 0.7
 
 class Tongue(Reduc,Orig):
     def __init__(self, p, par, h=1):
@@ -29,14 +30,14 @@ class Tongue(Reduc,Orig):
         
         x,y,v,w = param #[x,y,w,v] - точки
         f = np.zeros(4)
-        # x with 1 dot
-        f[0] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
-        # y with 1 dot
-        f[1] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
-        # x with 2 dots
-        f[2] = v
-        # y with 2 dots
-        f[3] = w
+        # x with 1 dots
+        f[1] = v
+        # y with 1 dots
+        f[2] = w
+        # x with 2 dot
+        f[2] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
+        # y with 2 dot
+        f[3] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         
         return f
     #нахождение собственных значений
@@ -83,6 +84,15 @@ class Tongue(Reduc,Orig):
         eig = self.__eigenvalues__(sost.x)
         # self.__paint_lams__(eig)
         return [eig,sost]
+    
+    #поиск состояния в некоторой окрестности
+    def __sr_in_e_okr__(self):
+        sost = self.param[0:2]
+        
+        
+        eig,tmp_sost = self.__iter_sr_eig__()
+        
+    
     #изменение шага параметра
     def __change_h__(self,eig_new,eig_old, ind):
         
@@ -101,6 +111,7 @@ class Tongue(Reduc,Orig):
         # for e in range(len(eig_new)):
         #     if eig_old
 
+    #получение индекса приближенного с.ч. к 0
     def __get_index__(self,eig):
         ind = 0
         tmp = 0
@@ -118,34 +129,149 @@ class Tongue(Reduc,Orig):
         
         return tmp
         # return res
+    
+    #проверка совпадения с.ч. редуц и ориг систем
+    def __ne_sopost_eig__(self,eig):
+        f = False
         
+        for i in range(len(eig[1])):
+            for j in range(len(eig[0])):
+                if np.abs(eig[1][i]-eig[0][j]) < 1e-2:
+                    f = True
+            if f:
+                f= False
+            else:
+                return True
+            
+        return False
 
-    def work(self):
+    #проверка перехода в другое состояние
+    def __check_sost_ravn__(self,old,new):
+        f = False
+        for i in range(len(old.x)):
+            tmp = np.abs(old.x[i]-new.x[i])
+            if(tmp)>ogr_sost:
+                f= True
+                break
+        return f
+    
+    #проверка устойчивости состояния (True - неустойчивое)
+    def __check_eig__(self,eig):
+        f = False
+        for i in eig:
+            if i.real>0:
+                f = True
+                break
+        return f
+
+    #функция для проверок
+    def tmp(self,m):
+        pass
+        # self.N = 5
+        # self.K, self.M = self.param[2:4]
+        # self.alpha = self.param[4]
+        # sost_ravn = []
+        # self.m = m
+        
+        
+        # self.work(1.84210526,[4.459709, 2.636232])
+        # # eig_old, sost_ravn = self.__iter_sr_eig__()
+        # # index = self.__get_index__(eig_old[1])
+        
+        # # print(sost_ravn.x)
+        
+        # # self.__paint_lams__(eig_old)
+        # return self.__check_eig__(eig_old[1])
+    
+    
+    #стартовое состояние
+    def __get_start_sost__(self,m):
+        self.N = 5
+        self.K, self.M = self.param[2:4]
+        self.alpha = self.param[4]
+        self.m = m
+        
+        eig_old, sost_ravn = self.__iter_sr_eig__()
+        
+        return sost_ravn
+    
+    #основной блок
+    def work(self,m, sost_last):
         self.N = 5
         self.K, self.M = self.param[2:4]
         self.alpha = self.param[4]
         sost_ravn = []
+        self.m = m
         
+        koord = []
+        
+        start_alpha = self.alpha
+        start_sost_ravn = self.param[0:2]
+        
+        #состояние на 0 шаге --------------------------
         eig_old, sost_ravn = self.__iter_sr_eig__()
-        index = self.__get_index__(eig_old[1])
+        if self.__check_sost_ravn__(sost_last,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_old):
+            pass
+        else:
+            index = self.__get_index__(eig_old[1])
+            sost_ravn_old = sost_ravn
+            koord.append([self.alpha,self.m,self.__check_eig__(eig_old[1])])
+            #состояние на 0 шаге --------------------------
+            
+            
+            f = 1
+            tmp = 0
+            while f:
+                self.alpha += self.h
+                eig_new,sost_ravn = self.__iter_sr_eig__()
+                if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new):
+                    self.h = -self.h
+                    self.alpha = start_alpha
+                    tmp+=1
+                    if tmp ==2:
+                        break
+                    continue
+                    
+                koord.append([self.alpha,self.m,self.__check_eig__(eig_new[1])])
+                # if (self.alpha < 2.834399999999984 + 0.1 and self.alpha > 2.834399999999984 - 0.1) and (self.m <1.8421052631578947+0.01 and self.m > 1.8421052631578947-0.01):
+                #     self.__paint_lams__(eig_new)
+                sost_ravn_old = sost_ravn
+                self.param[0:2] = sost_ravn.x[0:2]
+                
 
-        self.__paint_lams__(eig_old)
+            koord = np.array(koord)
+            ust = []
+            ne_ust = []
             
-        
-        f = 1
-        while f:
-            self.alpha+= self.h
-            eig_new,sost_ravn = self.__iter_sr_eig__()
-            f = self.__change_h__(eig_new[1],eig_old[1],index)
-            # self.__paint_lams__(eig_old)
-            eig_old = eig_new
+            for i in koord:
+                if i[2] == 1:
+                    ust.append([i[0:2]])
+                else:
+                    ne_ust.append([i[0:2]])
+            ust = np.array(ust)
+            ne_ust = np.array(ne_ust)
             
-        # print(it)
-        self.__paint_lams__(eig_new)
-        arr = [sost_ravn.x[0],sost_ravn.x[0],self.K,self.M,self.alpha]
-        print(arr)
-        hm(arr)
+            ust = ust.T
+            ne_ust = ne_ust.T
+            if len(ust>0):
+                plt.scatter(ust[0],ust[1],c='r')
+            if len(ne_ust>0):
+                plt.scatter(ne_ust[0],ne_ust[1],c='b')
+
+            
+            eig_old, sost_ravn = self.__iter_sr_eig__()
         
+        return sost_ravn        
+
+       
+    def find_tongue(self,m_space):
+        
+        start_sost = self.__get_start_sost__(m_space[0])
+        for m in m_space:
+            start_sost = self.work(m,start_sost)
+        
+        plt.show()
+    
 
 
         
@@ -153,7 +279,15 @@ class Tongue(Reduc,Orig):
 
 if __name__ == "__main__":
     tmp = [5 ,1, 1]
-    par = [2.636232, 4.459709, 2, 2, 1.0472] #[2.636232, 4.459709, 2, 2, 1.0472] 32 [2.636232, 4.459709, 2, 2, 1.0472]	
-    h = -0.5
+    par = [4.459709, 2.636232, 2, 1, 2.0944] #[2.636232, 4.459709, 2, 2, 1.0472] 32 [2.636232, 4.459709, 2, 2, 1.0472]	
+    h = 0.01
     tong = Tongue(tmp,par,h)
-    tong.work()
+    # print(tong.tmp(1.8421052631578947))
+    m_space = np.linspace(1,3,20)
+    tong.find_tongue(m_space)
+    
+    # print(m_space)
+    # tong.work(1.84210526,[4.459709, 2.636232])
+    # for m in m_space:
+    #     tong.work(m)
+    # plt.show()

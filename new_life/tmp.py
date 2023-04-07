@@ -84,7 +84,7 @@ def work(param):
     phi,eps,alpha,t_max = param
     
     v = np.zeros(len(phi))
-
+    v = v + 1e-1
     # for i in range(len(phi)):#
     #     phi[i] += eps
     #     v[i] += eps
@@ -112,7 +112,7 @@ def work(param):
     
     matrix = np.angle(np.exp(1j*matrix))
     print(matrix)
-    plt.imshow(matrix, cmap ='hot',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
+    plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,200,0,20], aspect=4)#extent=[0,len(phi)*50,0,len(phi)]
     plt.show()
     
     
@@ -133,10 +133,10 @@ if __name__ == "__main__":
     eps = 0#1e-5
     #[3.141593, 0.0, 2, 2, 3.14159]         40 неуст
     #[3.141593, 3.141593, 3, 1, 3.14159]    4  уст
-    low_arr = [3.141593, 3.141593, 3, 1, 3.14159]  	# [2.474646, 2.474646, 3, 1, 2.0944]	#[2.474646, 0.0, 2, 2, 2.0944]
+    low_arr = [0.0, 3.808539, 1, 1, 2.0944]  	# [2.474646, 2.474646, 3, 1, 2.0944]	#[2.474646, 0.0, 2, 2, 2.0944]
                                                         #0 0 0 2.474646 2.474646              0 0 2.474646 2.474646 0
     start_phi = 1
-    eps = 1e-7
+    eps = 1e-1
     phi1 = up_arr(start_phi,low_arr,5,5,eps)
     # phi1[3] +=0.000001
     alpha = low_arr[4]

@@ -725,7 +725,7 @@ class Original_sist(object):
         phi,eps,alpha,t_max = param
         
         v = np.zeros(len(phi))
-
+        v = v + 1e-1
         # for i in range(len(phi)):#
         #     phi[i] += eps
         #     v[i] += eps
@@ -749,7 +749,7 @@ class Original_sist(object):
 
         matrix = np.angle(np.exp(1j*matrix))
         print(matrix)
-        plt.imshow(matrix, cmap ='hot',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
+        plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
 
         plt.savefig(way + f'graph_{count+1}.png')
         plt.clf()
@@ -762,4 +762,4 @@ if __name__ == "__main__":
     tmp = [5 , 1, 1]
     ors = Original_sist(p = tmp, fi = 0)
     # ors.dinamic(params=[[np.pi, 0.0, 1, 2, 2]])
-    ors.sost_in_fi(key='un_st')
+    ors.sost_in_fi(key='st')
