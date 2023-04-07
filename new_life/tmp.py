@@ -112,7 +112,7 @@ def work(param):
     
     matrix = np.angle(np.exp(1j*matrix))
     print(matrix)
-    plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,200,0,20], aspect=4)#extent=[0,len(phi)*50,0,len(phi)]
+    plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
     plt.show()
     
     
