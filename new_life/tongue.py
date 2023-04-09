@@ -5,8 +5,6 @@ from matplotlib import pyplot as plt
 from scipy.optimize import root
 from tmp import heat_map as hm
 
-eps = 1e-7
-ogr_sost = 0.001
 
 class Tongue(Reduc,Orig):
     def __init__(self, p, par, h=1):
@@ -67,6 +65,19 @@ class Tongue(Reduc,Orig):
         plt.scatter(real_deal_old, not_real_deal_old, c='r', marker='x')
         plt.grid()
         plt.show()
+    
+    def plot_eig(self,m, alpha):
+        self.N = 5
+        self.K, self.M = self.param[2:4]
+        self.alpha = self.param[4]
+        self.m = m
+        self.alpha = alpha
+        
+        eig, sost = self.__iter_sr_eig__()
+        
+        self.__paint_lams__(eig)
+        
+    
     #нахождение состояния равновесия
     def __find_sost_ravn__(self):
         
@@ -185,18 +196,29 @@ class Tongue(Reduc,Orig):
                 f = True
                 break
         return f
+    
+    def __max_eig__(self,eig):
+        max_eig = -1000
+        
+        for i in eig:
+            if i.real>max_eig:
+                max_eig = i.real
+                
+        return max_eig
 
     #функция для проверок
-    def tmp(self,m):
-        pass
-        # self.N = 5
-        # self.K, self.M = self.param[2:4]
-        # self.alpha = self.param[4]
-        # sost_ravn = []
-        # self.m = m
+    def tmp(self,m, alpha):
+        self.N = 5
+        self.K, self.M = self.param[2:4]
+        self.alpha = self.param[4]
+        sost_ravn = []
+        self.m = m
+        self.alpha = alpha
         
+        tmp = self.__get_start_sost__(m)
         
-        # self.work(1.84210526,[4.459709, 2.636232])
+        self.work(m,tmp)
+        plt.show()
         # # eig_old, sost_ravn = self.__iter_sr_eig__()
         # # index = self.__get_index__(eig_old[1])
         
@@ -228,14 +250,13 @@ class Tongue(Reduc,Orig):
         koord = []
         
         start_alpha = self.alpha
-        start_sost_ravn = self.param[0:2]
         
         #состояние на 0 шаге --------------------------
         eig_old, sost_ravn = self.__iter_sr_eig__()
         if self.__check_sost_ravn__(sost_last,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_old):
             pass
         else:
-            index = self.__get_index__(eig_old[1])
+            # index = self.__get_index__(eig_old[1])
             sost_ravn_old = sost_ravn
             koord.append([self.alpha,self.m,self.__check_eig__(eig_old[1])])
             #состояние на 0 шаге --------------------------
@@ -255,7 +276,8 @@ class Tongue(Reduc,Orig):
                     if tmp ==2:
                         break
                     continue
-                    
+                
+                eig_old = eig_new
                 koord.append([self.alpha,self.m,self.__check_eig__(eig_new[1])])
                 # if (self.alpha < 2.834399999999984 + 0.1 and self.alpha > 2.834399999999984 - 0.1) and (self.m <1.8421052631578947+0.01 and self.m > 1.8421052631578947-0.01):
                 #     self.__paint_lams__(eig_new)
@@ -291,27 +313,108 @@ class Tongue(Reduc,Orig):
     def find_tongue(self,m_space):
         
         start_sost = self.__get_start_sost__(m_space[0])
+        
+        
         for m in m_space:
             start_sost = self.work(m,start_sost)
         
         plt.show()
     
+    def __find_max_eig__(self,m, sost_last):
+        self.N = 5
+        self.K, self.M = self.param[2:4]
+        sost_ravn = []
+        
+        koord = []
+        
+        start_alpha = self.alpha
+        
+        #состояние на 0 шаге --------------------------
+        eig_old, sost_ravn = self.__iter_sr_eig__()
+        if self.__check_sost_ravn__(sost_last,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_old):
+            pass
+        else:
+            # index = self.__get_index__(eig_old[1])
+            sost_ravn_old = sost_ravn
+            koord.append([self.alpha,self.__max_eig__(eig_old[1]),self.__check_eig__(eig_old[1])])
+            #состояние на 0 шаге --------------------------
+            
+            
+            f = 1
+            tmp = 0
+            while f:
+                self.alpha += self.h
+                eig_new,sost_ravn = self.__sr_in_e_okr__(eig_old, sost_ravn)
+                if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new):
+                    if np.abs(self.alpha) < np.pi:
+                        continue
+                    self.h = -self.h
+                    self.alpha = start_alpha
+                    tmp+=1
+                    if tmp ==2:
+                        break
+                    continue
+                
+                eig_old = eig_new
+                koord.append([self.alpha,self.__max_eig__(eig_old[1]),self.__check_eig__(eig_new[1])])
+                # if (self.alpha < 2.834399999999984 + 0.1 and self.alpha > 2.834399999999984 - 0.1) and (self.m <1.8421052631578947+0.01 and self.m > 1.8421052631578947-0.01):
+                #     self.__paint_lams__(eig_new)
+                sost_ravn_old = sost_ravn
+                self.param[0:2] = sost_ravn.x[0:2]
+                
 
+            koord = np.array(koord)
+            ust = []
+            ne_ust = []
+            
+            for i in koord:
+                if i[2] == 1:
+                    ust.append([i[0:2]])
+                else:
+                    ne_ust.append([i[0:2]])
+            ust = np.array(ust)
+            ne_ust = np.array(ne_ust)
+            
+            ust = ust.T
+            ne_ust = ne_ust.T
+            if len(ust>0):
+                plt.scatter(ust[0],ust[1],c='r')
+            if len(ne_ust>0):
+                plt.scatter(ne_ust[0],ne_ust[1],c='b')
+
+            
+            eig_old, sost_ravn = self.__iter_sr_eig__()
+        
+        return sost_ravn
+
+    def plot_eig_lvl(self,m,alpha):
+        self.N = 5
+        self.K, self.M = self.param[2:4]
+        self.alpha = self.param[4]
+        self.m = m
+        self.alpha = alpha
+        
+        start_sost = self.__get_start_sost__(m)
+        self.__find_max_eig__(m,start_sost)
+        
+        plt.show()
+        
 
         
         
+eps = 1e-7
+ogr_sost = 0.001
 
 if __name__ == "__main__":
     tmp = [5 ,1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944] #[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
-    h = 0.005
+    h = 0.01
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
+    # tong.tmp(0.30000000000000004,0.964400000000023)
     m_space = np.linspace(0.1,1,10)
-    tong.find_tongue(m_space)
+    # tong.find_tongue(m_space)
+    tong.plot_eig_lvl(1,2.0944)
     
-    # print(m_space)
-    # tong.work(1.84210526,[4.459709, 2.636232])
-    # for m in m_space:
-    #     tong.work(m)
-    # plt.show()
+    # tong.plot_eig(1,2.0944*2)
+   
