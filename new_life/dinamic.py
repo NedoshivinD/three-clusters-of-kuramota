@@ -97,6 +97,14 @@ class Dinamic(object):
             # plt.show()
             plt.clf()
 
+    def drow_map_al_lam(self, x, y, al):
+        start_point = np.zeros(4)
+        start_point[0] = x
+        start_point[1] = y
+        self.alpha = al
+        res = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1, rtol = 1e-7, atol = 1e-7)
+        return [res.y[0][len(res)], res.y[1][len(res)]]
+
     def create_path(self, way):
         if not os.path.exists(way):
             os.makedirs(way)
@@ -115,9 +123,11 @@ class Dinamic(object):
 
 if __name__ == "__main__":
     tmp = [5, 1, 1]
-    ors = Dinamic(p = tmp)
-    way = f"new_life\\res\\n_{ors.N}\\dinamic_sost"
-    ors.paral(way)
+    din = Dinamic(p = tmp)
+    way = f"new_life\\res\\n_{din.N}\\dinamic_sost"
+    # din.paral(way)
+    res = din.drow_map_al_lam(-np.pi,-3.01236, 2.356194490192345)
+    print(res)
     
     # res = ors.calculation([-3.14059, -3.14259],[3.141592653589793,1])
     # plt.plot(res[2],np.angle(np.exp(1j*res[0])),label="x")
@@ -129,3 +139,5 @@ if __name__ == "__main__":
     # plt.legend()
     # plt.show()
     
+#напиши калькулятор
+
