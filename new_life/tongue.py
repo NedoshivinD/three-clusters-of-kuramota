@@ -4,9 +4,11 @@ from original_sist import Original_sist as Orig
 from matplotlib import pyplot as plt
 from scipy.optimize import root
 from tmp import heat_map as hm
+import joblib 
 
 eps = 1e-7
 ogr_sost = 0.001
+N_JOB = 8
 
 class Tongue(Reduc,Orig):
     def __init__(self, p, par, h=1):
@@ -14,7 +16,8 @@ class Tongue(Reduc,Orig):
         Orig.__init__(self, p, 1)
         self.param = par
         self.h = h
-    
+        self.start_sost = 0
+
     def change_params(self,par):
         self.param = par
     #определение устойчивости состояния равновесия (больше для редуцированной системы)
@@ -218,7 +221,7 @@ class Tongue(Reduc,Orig):
         return sost_ravn
     
     #основной блок
-    def work(self,m, sost_last):
+    def work(self,m):
         self.N = 5
         self.K, self.M = self.param[2:4]
         self.alpha = self.param[4]
@@ -226,6 +229,7 @@ class Tongue(Reduc,Orig):
         self.m = m
         
         koord = []
+        sost_last = self.start_sost
         
         start_alpha = self.alpha
         start_sost_ravn = self.param[0:2]
@@ -264,39 +268,60 @@ class Tongue(Reduc,Orig):
                 
 
             koord = np.array(koord)
-            ust = []
-            ne_ust = []
+            # ust = []
+            # ne_ust = []
             
-            for i in koord:
-                if i[2] == 1:
-                    ust.append([i[0:2]])
-                else:
-                    ne_ust.append([i[0:2]])
-            ust = np.array(ust)
-            ne_ust = np.array(ne_ust)
+            # for i in koord:
+            #     if i[2] == 1:
+            #         ust.append([i[0:2]])
+            #     else:
+            #         ne_ust.append([i[0:2]])
+            # ust = np.array(ust)
+            # ne_ust = np.array(ne_ust)
             
-            ust = ust.T
-            ne_ust = ne_ust.T
-            if len(ust>0):
-                plt.scatter(ust[0],ust[1],c='r')
-            if len(ne_ust>0):
-                plt.scatter(ne_ust[0],ne_ust[1],c='b')
+            # ust = ust.T
+            # ne_ust = ne_ust.T
+            # if len(ust>0):
+            #     plt.scatter(ust[0],ust[1],c='r')
+            # if len(ne_ust>0):
+            #     plt.scatter(ne_ust[0],ne_ust[1],c='b')
 
             
             eig_old, sost_ravn = self.__iter_sr_eig__()
+            self.start_sost = sost_ravn
         
-        return sost_ravn        
+        return koord        
 
        
     def find_tongue(self,m_space):
         
-        start_sost = self.__get_start_sost__(m_space[0])
-        for m in m_space:
-            start_sost = self.work(m,start_sost)
+        self.start_sost = self.__get_start_sost__(m_space[0])
+        # for m in m_space:
+        #     start_sost = self.work(m,start_sost)
+
+        koord = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.work)(m) for m in m_space)
+        # print(self.sost())
+        koord = np.array(koord)
+        ust = []
+        ne_ust = []
+        
+        for j in koord:
+            for i in j:
+                if i[2] == 1:
+                    ust.append([i[0:2]])
+                else:
+                    ne_ust.append([i[0:2]])
+        ust = np.array(ust)
+        ne_ust = np.array(ne_ust)
+        
+        ust = ust.T
+        ne_ust = ne_ust.T
+        if len(ust>0):
+            plt.scatter(ust[0],ust[1],c='r')
+        if len(ne_ust>0):
+            plt.scatter(ne_ust[0],ne_ust[1],c='b')
         
         plt.show()
-    
-
 
         
         
@@ -307,7 +332,7 @@ if __name__ == "__main__":
     h = 0.005
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
-    m_space = np.linspace(0.1,1,10)
+    m_space = np.linspace(0.1,10,1000)
     tong.find_tongue(m_space)
     
     # print(m_space)
