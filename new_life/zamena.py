@@ -267,7 +267,7 @@ class Equilibrium_states(object):
         plt.plot(self.t,tmp[:,0],label="x")
         plt.plot(self.t,tmp[:,1],label="y", linestyle = '--')
         plt.xlim(0, 100)
-        plt.ylim(-10, 20)
+        plt.ylim(-np.pi, np.pi)
         plt.legend()
         plt.show()
     
@@ -384,5 +384,5 @@ if __name__ == "__main__":
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     # es.parall_st_eq() #подсчет всех состояний
-    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   
