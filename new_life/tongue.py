@@ -6,7 +6,7 @@ from scipy.optimize import root
 from tmp import heat_map as hm
 
 eps = 1e-7
-ogr_sost = 0.7
+ogr_sost = 0.001
 
 class Tongue(Reduc,Orig):
     def __init__(self, p, par, h=1):
@@ -86,11 +86,33 @@ class Tongue(Reduc,Orig):
         return [eig,sost]
     
     #поиск состояния в некоторой окрестности
-    def __sr_in_e_okr__(self):
-        sost = self.param[0:2]
-        
+    def __sr_in_e_okr__(self, old_eig,old_sost):
+        num_h = 100
         
         eig,tmp_sost = self.__iter_sr_eig__()
+        f = self.__check_sost_ravn__(tmp_sost, old_sost)
+        
+        if f:
+            for i in range(num_h):
+                self.param[0] = old_sost.x[0] + (1+i)*h
+                self.param[1] = old_sost.x[1] + (1+i)*h
+                eig,tmp_sost = self.__iter_sr_eig__()
+                f = self.__check_sost_ravn__(tmp_sost, old_sost)        
+                if not f:
+                    return [eig,tmp_sost]
+            for i in range(num_h):
+                self.param[0] = old_sost.x[0] + (1+i)*h
+                self.param[1] = old_sost.x[1] + (1+i)*h
+                eig,tmp_sost = self.__iter_sr_eig__()
+                f = self.__check_sost_ravn__(tmp_sost, old_sost)        
+                if not f:
+                    return [eig,tmp_sost]
+        else:
+            return [eig,tmp_sost]
+
+        return [old_eig,old_sost]
+        
+                    
         
     
     #изменение шага параметра
@@ -223,8 +245,10 @@ class Tongue(Reduc,Orig):
             tmp = 0
             while f:
                 self.alpha += self.h
-                eig_new,sost_ravn = self.__iter_sr_eig__()
+                eig_new,sost_ravn = self.__sr_in_e_okr__(eig_old, sost_ravn)
                 if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new):
+                    if np.abs(self.alpha) < np.pi:
+                        continue
                     self.h = -self.h
                     self.alpha = start_alpha
                     tmp+=1
@@ -279,11 +303,11 @@ class Tongue(Reduc,Orig):
 
 if __name__ == "__main__":
     tmp = [5 ,1, 1]
-    par = [4.459709, 2.636232, 2, 1, 2.0944] #[2.636232, 4.459709, 2, 2, 1.0472] 32 [2.636232, 4.459709, 2, 2, 1.0472]	
-    h = 0.01
+    par = [4.459709, 2.636232, 2, 1, 2.0944] #[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
+    h = 0.005
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
-    m_space = np.linspace(1,3,20)
+    m_space = np.linspace(0.1,1,10)
     tong.find_tongue(m_space)
     
     # print(m_space)
