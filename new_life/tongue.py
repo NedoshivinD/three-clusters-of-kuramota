@@ -5,10 +5,9 @@ from matplotlib import pyplot as plt
 from scipy.optimize import root
 from tmp import heat_map as hm
 import joblib 
+import time
 
-eps = 1e-7
-ogr_sost = 0.001
-N_JOB = 8
+
 
 class Tongue(Reduc,Orig):
     def __init__(self, p, par, h=1):
@@ -17,6 +16,7 @@ class Tongue(Reduc,Orig):
         self.param = par
         self.h = h
         self.start_sost = 0
+        self.start_eig = 0
 
     def change_params(self,par):
         self.param = par
@@ -103,30 +103,31 @@ class Tongue(Reduc,Orig):
     
     #поиск состояния в некоторой окрестности
     def __sr_in_e_okr__(self, old_eig,old_sost):
-        num_h = 100
+        num_h = 10
         
         eig,tmp_sost = self.__iter_sr_eig__()
-        f = self.__check_sost_ravn__(tmp_sost, old_sost)
+        # f = self.__check_sost_ravn__(tmp_sost, old_sost)
         
-        if f:
-            for i in range(num_h):
-                self.param[0] = old_sost.x[0] + (1+i)*h
-                self.param[1] = old_sost.x[1] + (1+i)*h
-                eig,tmp_sost = self.__iter_sr_eig__()
-                f = self.__check_sost_ravn__(tmp_sost, old_sost)        
-                if not f:
-                    return [eig,tmp_sost]
-            for i in range(num_h):
-                self.param[0] = old_sost.x[0] + (1+i)*h
-                self.param[1] = old_sost.x[1] + (1+i)*h
-                eig,tmp_sost = self.__iter_sr_eig__()
-                f = self.__check_sost_ravn__(tmp_sost, old_sost)        
-                if not f:
-                    return [eig,tmp_sost]
-        else:
-            return [eig,tmp_sost]
+        # if f:
+        #     for i in range(num_h):
+        #         self.param[0] = old_sost.x[0] + (1+i)*h_eps
+        #         self.param[1] = old_sost.x[1] + (1+i)*h_eps
+        #         eig,tmp_sost = self.__iter_sr_eig__()
+        #         f = self.__check_sost_ravn__(tmp_sost, old_sost)        
+        #         if not f:
+        #             return [eig,tmp_sost]
+        #     for i in range(num_h):
+        #         self.param[0] = old_sost.x[0] - (1+i)*h_eps
+        #         self.param[1] = old_sost.x[1] - (1+i)*h_eps
+        #         eig,tmp_sost = self.__iter_sr_eig__()
+        #         f = self.__check_sost_ravn__(tmp_sost, old_sost)        
+        #         if not f:
+        #             return [eig,tmp_sost]
+        # else:
+        #     return [eig,tmp_sost]
 
-        return [old_eig,old_sost]
+        # return [old_eig,old_sost]
+        return [eig,tmp_sost]
         
                     
         
@@ -246,6 +247,7 @@ class Tongue(Reduc,Orig):
     
     #основной блок
     def work(self,m):
+        print(m)
         self.N = 5
         self.K, self.M = self.param[2:4]
         self.alpha = self.param[4]
@@ -254,11 +256,12 @@ class Tongue(Reduc,Orig):
         
         koord = []
         sost_last = self.start_sost
+        eig_start = self.start_eig
         
         start_alpha = self.alpha
         
         #состояние на 0 шаге --------------------------
-        eig_old, sost_ravn = self.__iter_sr_eig__()
+        eig_old, sost_ravn = self.__sr_in_e_okr__(eig_start, sost_last)
         if self.__check_sost_ravn__(sost_last,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_old):
             pass
         else:
@@ -273,7 +276,7 @@ class Tongue(Reduc,Orig):
             while f:
                 self.alpha += self.h
                 eig_new,sost_ravn = self.__sr_in_e_okr__(eig_old, sost_ravn)
-                if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new):
+                if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new) or np.abs(self.alpha) > np.pi:
                     if np.abs(self.alpha) < np.pi:
                         continue
                     self.h = -self.h
@@ -313,11 +316,14 @@ class Tongue(Reduc,Orig):
             
             eig_old, sost_ravn = self.__iter_sr_eig__()
             self.start_sost = sost_ravn
+            self.start_eig = eig_old
         
         return koord        
 
        
     def find_tongue(self,m_space):
+
+        t = time.time()
         
         self.start_sost = self.__get_start_sost__(m_space[0])
         # for m in m_space:
@@ -325,7 +331,11 @@ class Tongue(Reduc,Orig):
 
         koord = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.work)(m) for m in m_space)
         # print(self.sost())
-        koord = np.array(koord)
+        # koord = np.array(koord)
+        print("time work: ", time.time() - t)
+
+        t = time.time()
+        
         ust = []
         ne_ust = []
         
@@ -345,8 +355,10 @@ class Tongue(Reduc,Orig):
         if len(ne_ust>0):
             plt.scatter(ne_ust[0],ne_ust[1],c='b')
         
+        # print(time.time() - t)
         plt.show()
-    
+
+
     def __find_max_eig__(self,m, sost_last):
         self.N = 5
         self.K, self.M = self.param[2:4]
@@ -431,17 +443,19 @@ class Tongue(Reduc,Orig):
         
 eps = 1e-7
 ogr_sost = 0.001
+N_JOB = 6
+# h_eps = 0.01
 
 if __name__ == "__main__":
     tmp = [5 ,1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944] #[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
-    h = 0.01
+    h = 1e-6
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(0.30000000000000004,0.964400000000023)
-    m_space = np.linspace(0.1,1,10)
-    # tong.find_tongue(m_space)
-    tong.plot_eig_lvl(1,2.0944)
+    m_space = np.linspace(1,2,1000)
+    tong.find_tongue(m_space)
+    # tong.plot_eig_lvl(1,2.0944)
     
     # tong.plot_eig(1,2.0944*2)
    
