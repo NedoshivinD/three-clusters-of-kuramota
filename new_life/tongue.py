@@ -348,7 +348,7 @@ class Tongue(Reduc,Orig):
                     last_koord = point
             border_arr.append(tmp_arr)
 
-        color_arr = ['b','r']
+        color_arr = ['b','r','g','y']
         for i in range(len(border_arr)):
             x = border_arr[i]
             x = np.array(x)
@@ -485,12 +485,12 @@ N_JOB = 6
 if __name__ == "__main__":
     tmp = [5, 1, 1]
     par = [4.459709, 2.636232, 2, 1, 1.0472] #[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
-    arr_par = [[1.823477, 4.459709, 1, 2, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944],
+    arr_par = [[1.823477, 3.646953, 2, 1, 2.0944],[1.823477, 3.646953, 2, 1, 3.14159],[1.823477, 4.459709, 1, 2, 3.14159],[2.636232, 4.459709, 2, 2, 3.14159]] #[4.459709, 2.636232, 2, 1, 2.0944],
     h = 1e-2
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
-    m_space = np.linspace(1,2,100)
+    m_space = np.linspace(0.1,50,1000)
     # tong.find_tongue(m_space)
     tong.find_border_tongue(m_space,arr_par)
     # tong.plot_eig_lvl(1,2.0944)

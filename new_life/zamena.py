@@ -53,12 +53,35 @@ class Equilibrium_states(object):
         
         return f
     
+    def syst_root(self,param):
+        N = self.N
+        M = self.M
+        K = self.K
+        alpha = self.alpha
+        m = self.m
+        
+        x,y,v,w = param #[x,y,w,v] - точки
+        f = np.zeros(4)
+        # x with 1 dots
+        f[0] = v
+        # y with 1 dots
+        f[1] = w
+        # x with 2 dot
+        f[2] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
+        # y with 2 dot
+        f[3] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
+        
+        return f
+    
     def __trash_off__(self,arr):
         tmp = []
         tmp_res = []
         res = []
         par = arr[0][2:5]
         for i in arr:
+            if np.abs(i[0]) == np.abs(i[1]) or np.abs(i[0]) == 0 or np.abs(i[1]) == 0:
+                continue
+            
             if par == i[2:5]:
                 tmp = [round(np.sin(i[0])+np.cos(i[0])),round(np.sin(i[1])+np.cos(i[1]))]
                 if tmp not in tmp_res:
@@ -87,7 +110,7 @@ class Equilibrium_states(object):
         
         for x in X:
             for y in Y:
-                sol = root(self.syst,[x,y,v,w],args=(0),method='lm')
+                sol = root(self.syst_root,[x,y,v,w],method='lm')
                 xar,yar,var,war = sol.x
                 xar = round(xar,6)
                 yar = round(yar,6)
@@ -325,6 +348,6 @@ if __name__ == "__main__":
     tmp = [5 ,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    # es.parall_st_eq() #подсчет всех состояний
-    es.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.parall_st_eq() #подсчет всех состояний
+    # es.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   
