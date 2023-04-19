@@ -357,6 +357,9 @@ class Tongue(Reduc,Orig):
             
         # print(time.time() - t)
         plt.show()
+        
+        for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
+            self.plot_eig_lvl(m, self.alpha,1e-3)
 
     def find_tongue(self,m_space):
         t = time.time()
@@ -395,7 +398,7 @@ class Tongue(Reduc,Orig):
         plt.show()
 
 
-    def __find_max_eig__(self,m, sost_last):
+    def __find_max_eig__(self,m, sost_last,h):
         self.N = 5
         self.K, self.M = self.param[2:4]
         sost_ravn = []
@@ -418,7 +421,7 @@ class Tongue(Reduc,Orig):
             f = 1
             tmp = 0
             while f:
-                self.alpha += self.h
+                self.alpha += h
                 eig_new,sost_ravn = self.__sr_in_e_okr__(eig_old, sost_ravn)
                 if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new):
                     if np.abs(self.alpha) < np.pi:
@@ -462,15 +465,15 @@ class Tongue(Reduc,Orig):
         
         return sost_ravn
 
-    def plot_eig_lvl(self,m,alpha):
+    def plot_eig_lvl(self,m,alpha,h):
         self.N = 5
         self.K, self.M = self.param[2:4]
-        self.alpha = self.param[4]
         self.m = m
         self.alpha = alpha
+        self.param[4] = alpha
         
         start_sost = self.__get_start_sost__(m)
-        self.__find_max_eig__(m,start_sost)
+        self.__find_max_eig__(m,start_sost,h)
         
         plt.show()
         
@@ -479,21 +482,21 @@ class Tongue(Reduc,Orig):
         
 eps = 1e-7
 ogr_sost = 0.001
-N_JOB = 6
+N_JOB = 8
 # h_eps = 0.01
 
 if __name__ == "__main__":
     tmp = [5, 1, 1]
-    par = [4.459709, 2.636232, 2, 1, 1.0472] #[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
-    arr_par = [[1.823477, 3.646953, 2, 1, 2.0944],[1.823477, 3.646953, 2, 1, 3.14159],[1.823477, 4.459709, 1, 2, 3.14159],[2.636232, 4.459709, 2, 2, 3.14159]] #[4.459709, 2.636232, 2, 1, 2.0944],
-    h = 1e-2
+    par = [1.823477, 3.646953, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
+    arr_par = [[1.823477, 3.646953, 2, 1, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944],
+    h = 1e-3
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
-    m_space = np.linspace(0.1,50,1000)
+    m_space = np.linspace(0.1,50,500)
     # tong.find_tongue(m_space)
-    tong.find_border_tongue(m_space,arr_par)
-    # tong.plot_eig_lvl(1,2.0944)
+    # tong.find_border_tongue(m_space,arr_par)
+    tong.plot_eig_lvl(1.1,-np.pi, 1e-2)
     
     # tong.plot_eig(1,2.0944*2)
    
