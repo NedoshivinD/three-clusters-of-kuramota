@@ -442,10 +442,12 @@ class Tongue(Reduc,Orig):
             ust_complex=[]
             ne_ust_complex=[]
             
-            space = len(koord)//proc
+            space = round(len(koord)/round(len(koord)*(proc)))
+            # space = round(163/80)
             tmp_i = 0
             for i in koord:
                 tmp_i+=1
+                
                 if tmp_i == space:
                     tmp_i = 0
                     
@@ -459,8 +461,6 @@ class Tongue(Reduc,Orig):
                             ne_ust_complex.append([i[0:2]])
                         else:
                             ne_ust_real.append([i[0:2]])
-                else:
-                    continue
                 
                         
                 
@@ -518,8 +518,8 @@ if __name__ == "__main__":
     # tong.tmp(1, 2.0944)
     m_space = np.linspace(0.1,50,500)
     # tong.find_tongue(m_space)
-    tong.find_border_tongue(m_space,arr_par,1e-5,30)
-    # tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-2, 100)
+    # tong.find_border_tongue(m_space,arr_par,1e-2,0.5)
+    tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-6, 0.5) #самое правое значение от 0 до 1
     
     # tong.plot_eig(1,2.0944*2)
    
