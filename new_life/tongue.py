@@ -209,8 +209,9 @@ class Tongue(Reduc,Orig):
         for i in eig:
             if i.real>max_eig:
                 max_eig = i.real
+                comp = isinstance(i, complex)
                 
-        return max_eig
+        return max_eig, comp
 
     #функция для проверок
     def tmp(self,m, alpha):
@@ -275,19 +276,19 @@ class Tongue(Reduc,Orig):
             
             
             f = 1
-            tmp = 0
+            # tmp = 0
             while f:
                 self.alpha += self.h
                 eig_new,sost_ravn = self.__sr_in_e_okr__(eig_old, sost_ravn)
                 if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new) or np.abs(self.alpha) > np.pi:
                     if np.abs(self.alpha) < np.pi:
                         continue
-                    self.h = -self.h
                     self.alpha = start_alpha
-                    tmp+=1
-                    if tmp ==2:
-                        break
-                    continue
+                    break
+                    # self.h = -self.h
+                    # tmp+=1
+                    # if tmp ==2:
+                    # continue
                 
                 eig_old = eig_new
                 koord.append([self.alpha,self.m,self.__check_eig__(eig_new[1])])
@@ -298,24 +299,6 @@ class Tongue(Reduc,Orig):
                 
 
             koord = np.array(koord)
-            # ust = []
-            # ne_ust = []
-            
-            # for i in koord:
-            #     if i[2] == 1:
-            #         ust.append([i[0:2]])
-            #     else:
-            #         ne_ust.append([i[0:2]])
-            # ust = np.array(ust)
-            # ne_ust = np.array(ne_ust)
-            
-            # ust = ust.T
-            # ne_ust = ne_ust.T
-            # if len(ust>0):
-            #     plt.scatter(ust[0],ust[1],c='r')
-            # if len(ne_ust>0):
-            #     plt.scatter(ne_ust[0],ne_ust[1],c='b')
-
             
             eig_old, sost_ravn = self.__iter_sr_eig__()
             self.start_sost = sost_ravn
@@ -323,43 +306,47 @@ class Tongue(Reduc,Orig):
         
         return koord        
 
-    def find_border_tongue(self,m_space, arr_par):
+    def find_border_tongue(self,m_space, arr_par,h,proc):
         border_arr = []
         for par in arr_par:
-            tmp_arr = []
-            self.param = par
-            t = time.time()
+        #     tmp_arr = []
+        #     self.param = par
+        #     self.alpha = -np.pi
+        #     t = time.time()
         
-            self.start_sost = self.__get_start_sost__(m_space[0])
-            # for m in m_space:
-            #     start_sost = self.work(m,start_sost)
+        #     self.start_sost = self.__get_start_sost__(m_space[0])
+        #     # for m in m_space:
+        #     #     start_sost = self.work(m,start_sost)
 
-            koord = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.work)(m) for m in m_space)
-            # print(self.sost())
-            koord = np.array(koord)
-            print("time work: ", time.time() - t)
-            for line in koord.T:
-                if len(line) == 0:
-                    continue
-                last_koord = line[0]
-                for point in line:
-                    if last_koord[2] != point[2]:
-                        tmp_arr.append(point[0:2])
-                    last_koord = point
-            border_arr.append(tmp_arr)
+        #     koord = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.work)(m) for m in m_space)
+        #     # print(self.sost())
+        #     koord = np.array(koord)
+        #     print("time work: ", time.time() - t)
+        #     for line in koord.T:
+        #         if len(line) == 0:
+        #             continue
+        #         last_koord = line[0]
+        #         for point in line:
+        #             if last_koord[2] != point[2]:
+        #                 tmp_arr.append(point[0:2])
+        #             last_koord = point
+        #     border_arr.append(tmp_arr)
 
-        color_arr = ['b','r','g','y']
-        for i in range(len(border_arr)):
-            x = border_arr[i]
-            x = np.array(x)
-            x = x.T
-            plt.scatter(x[0],x[1],c=color_arr[i], alpha = 0.5)
+        # color_arr = ['b','r','g','y']
+        # for i in range(len(border_arr)):
+        #     x = border_arr[i]
+        #     x = np.array(x)
+        #     x = x.T
+        #     plt.scatter(x[0],x[1],c=color_arr[i], alpha = 0.5)
             
         # print(time.time() - t)
-        plt.show()
+        # plt.show()
         
-        for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
-            self.plot_eig_lvl(m, self.alpha,1e-3)
+            joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.plot_eig_lvl)(m,par,h,proc) for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]])
+        
+        
+        # for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
+        #     self.plot_eig_lvl(m, par,1e-5)
 
     def find_tongue(self,m_space):
         t = time.time()
@@ -398,12 +385,13 @@ class Tongue(Reduc,Orig):
         plt.show()
 
 
-    def __find_max_eig__(self,m, sost_last,h):
+    def __find_max_eig__(self,m, sost_last,h,proc):
         self.N = 5
         self.K, self.M = self.param[2:4]
         sost_ravn = []
         
         koord = []
+        print("nachal")
         
         start_alpha = self.alpha
         
@@ -414,27 +402,32 @@ class Tongue(Reduc,Orig):
         else:
             # index = self.__get_index__(eig_old[1])
             sost_ravn_old = sost_ravn
-            koord.append([self.alpha,self.__max_eig__(eig_old[1]),self.__check_eig__(eig_old[1])])
+            
+            
+            eig_compl = self.__max_eig__(eig_old[1])            
+            koord.append([self.alpha,eig_compl[0],self.__check_eig__(eig_old[1]),eig_compl[1]])
             #состояние на 0 шаге --------------------------
             
             
             f = 1
-            tmp = 0
+            # tmp = 0
             while f:
                 self.alpha += h
                 eig_new,sost_ravn = self.__sr_in_e_okr__(eig_old, sost_ravn)
                 if  self.__check_sost_ravn__(sost_ravn_old,sost_ravn) or sost_ravn.success==False or self.__ne_sopost_eig__(eig_new):
                     if np.abs(self.alpha) < np.pi:
                         continue
-                    self.h = -self.h
                     self.alpha = start_alpha
-                    tmp+=1
-                    if tmp ==2:
-                        break
-                    continue
+                    break
+                    # self.h = -self.h
+                    # tmp+=1
+                    # if tmp ==2:
+                    # continue
                 
                 eig_old = eig_new
-                koord.append([self.alpha,self.__max_eig__(eig_old[1]),self.__check_eig__(eig_new[1])])
+                
+                eig_compl = self.__max_eig__(eig_old[1])
+                koord.append([self.alpha,eig_compl[0],self.__check_eig__(eig_old[1]),eig_compl[1]])
                 # if (self.alpha < 2.834399999999984 + 0.1 and self.alpha > 2.834399999999984 - 0.1) and (self.m <1.8421052631578947+0.01 and self.m > 1.8421052631578947-0.01):
                 #     self.__paint_lams__(eig_new)
                 sost_ravn_old = sost_ravn
@@ -442,40 +435,70 @@ class Tongue(Reduc,Orig):
                 
 
             koord = np.array(koord)
-            ust = []
-            ne_ust = []
+            print("risyu")
             
+            ust_real=[]
+            ne_ust_real=[]
+            ust_complex=[]
+            ne_ust_complex=[]
+            
+            space = len(koord)//proc
+            tmp_i = 0
             for i in koord:
-                if i[2] == 1:
-                    ust.append([i[0:2]])
+                tmp_i+=1
+                if tmp_i == space:
+                    tmp_i = 0
+                    
+                    if i[2] == 1:
+                        if i[3]==1:
+                            ust_complex.append([i[0:2]])
+                        else:
+                            ust_real.append([i[0:2]])
+                    else:
+                        if i[3]==1:
+                            ne_ust_complex.append([i[0:2]])
+                        else:
+                            ne_ust_real.append([i[0:2]])
                 else:
-                    ne_ust.append([i[0:2]])
-            ust = np.array(ust)
-            ne_ust = np.array(ne_ust)
+                    continue
+                
+                        
+                
+            ust_real        = np.array(ust_real)
+            ne_ust_real     = np.array(ne_ust_real)
+            ust_complex     = np.array(ust_complex)
+            ne_ust_complex  = np.array(ne_ust_complex)
             
-            ust = ust.T
-            ne_ust = ne_ust.T
-            if len(ust>0):
-                plt.scatter(ust[0],ust[1],c='r')
-            if len(ne_ust>0):
-                plt.scatter(ne_ust[0],ne_ust[1],c='b')
-
+            fig, ax = plt.subplots()
             
-            eig_old, sost_ravn = self.__iter_sr_eig__()
-        
-        return sost_ravn
+            ust_real        = ust_real.T
+            ne_ust_real     =ne_ust_real.T
+            ust_complex     =ust_complex.T
+            ne_ust_complex  =ne_ust_complex.T
+            
+            if len(ust_real>0):
+                ax.scatter(ust_real[0],ust_real[1],c='r',marker='x')
+            if len(ne_ust_real>0):
+                ax.scatter(ne_ust_real[0],ne_ust_real[1],c='b',marker='o')
+            if len(ust_complex>0):
+                ax.scatter(ust_complex[0],ust_complex[1],c='r',marker='x')
+            if len(ne_ust_complex>0):
+                ax.scatter(ne_ust_complex[0],ne_ust_complex[1],c='b',marker='o')
 
-    def plot_eig_lvl(self,m,alpha,h):
+            plt.show()
+
+    def plot_eig_lvl(self,m,param,h,proc):
         self.N = 5
+        self.param = param
         self.K, self.M = self.param[2:4]
         self.m = m
-        self.alpha = alpha
-        self.param[4] = alpha
+        self.param[4] = -np.pi
         
         start_sost = self.__get_start_sost__(m)
-        self.__find_max_eig__(m,start_sost,h)
+        self.__find_max_eig__(m,start_sost,h,proc)
         
-        plt.show()
+        
+        
         
 
         
@@ -487,7 +510,7 @@ N_JOB = 8
 
 if __name__ == "__main__":
     tmp = [5, 1, 1]
-    par = [1.823477, 3.646953, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
+    par = [4.459709, 2.636232, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]	 [4.459709, 2.636232, 2, 1, 2.0944]
     arr_par = [[1.823477, 3.646953, 2, 1, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944],
     h = 1e-3
     tong = Tongue(tmp,par,h)
@@ -495,8 +518,8 @@ if __name__ == "__main__":
     # tong.tmp(1, 2.0944)
     m_space = np.linspace(0.1,50,500)
     # tong.find_tongue(m_space)
-    # tong.find_border_tongue(m_space,arr_par)
-    tong.plot_eig_lvl(1.1,-np.pi, 1e-2)
+    tong.find_border_tongue(m_space,arr_par,1e-5,30)
+    # tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-2, 100)
     
     # tong.plot_eig(1,2.0944*2)
    
