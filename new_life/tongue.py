@@ -359,9 +359,12 @@ class Tongue(Reduc,Orig):
             y_fit1 = a1 * first_cluster[0]**4 + b1 * first_cluster[0]**3 + c1 *first_cluster[0]**2 + d1*first_cluster[0] + e1
             y_fit2 = a2 * second_cluster[0]**4 + b2 * second_cluster[0]**3 + c2 *second_cluster[0]**2 + d2*second_cluster[0] + e2
             plt.plot(first_cluster[0],y_fit1,c=color_arr[i],alpha=0.5)
-            plt.plot(second_cluster[0],y_fit2,c=color_arr[i],alpha=0.5)
-        
+            plt.plot(second_cluster[0],y_fit2,c=color_arr[i],alpha=0.5,label=arr_par[i])
+            plt.xlabel(r'$\alpha$')
+            plt.ylabel('m')
+
         print(time.time() - t)
+        plt.legend()
         plt.show()
         
             # joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.plot_eig_lvl)(m,par,h,proc) for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]])
