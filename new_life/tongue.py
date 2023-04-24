@@ -519,7 +519,7 @@ if __name__ == "__main__":
     m_space = np.linspace(0.1,50,500)
     # tong.find_tongue(m_space)
     # tong.find_border_tongue(m_space,arr_par,1e-2,0.5)
-    tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-6, 0.5) #самое правое значение от 0 до 1
+    tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-6, 0.1) #самое правое значение от 0 до 1
     
     # tong.plot_eig(1,2.0944*2)
    
