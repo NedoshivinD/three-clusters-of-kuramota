@@ -6,6 +6,8 @@ from scipy.optimize import root
 from tmp import heat_map as hm
 import joblib 
 import time
+from sklearn.cluster import KMeans
+from scipy.optimize import curve_fit 
 
 
 
@@ -309,44 +311,96 @@ class Tongue(Reduc,Orig):
     def find_border_tongue(self,m_space, arr_par,h,proc):
         border_arr = []
         for par in arr_par:
-        #     tmp_arr = []
-        #     self.param = par
-        #     self.alpha = -np.pi
-        #     t = time.time()
+            tmp_arr = []
+            self.param = par
+            self.alpha = -np.pi
+            t = time.time()
         
-        #     self.start_sost = self.__get_start_sost__(m_space[0])
-        #     # for m in m_space:
-        #     #     start_sost = self.work(m,start_sost)
+            self.start_sost = self.__get_start_sost__(m_space[0])
 
-        #     koord = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.work)(m) for m in m_space)
-        #     # print(self.sost())
-        #     koord = np.array(koord)
-        #     print("time work: ", time.time() - t)
-        #     for line in koord.T:
-        #         if len(line) == 0:
-        #             continue
-        #         last_koord = line[0]
-        #         for point in line:
-        #             if last_koord[2] != point[2]:
-        #                 tmp_arr.append(point[0:2])
-        #             last_koord = point
-        #     border_arr.append(tmp_arr)
+            koord = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.work)(m) for m in m_space)
+            koord = np.array(koord)
+            print("time work: ", time.time() - t)
+            for line in koord.T:
+                if len(line) == 0:
+                    continue
+                last_koord = line[0]
+                for point in line:
+                    if last_koord[2] != point[2]:
+                        tmp_arr.append(point[0:2])
+                    last_koord = point
+            tmp_arr=self.sortMerge(tmp_arr)
+            border_arr.append(tmp_arr)
 
-        # color_arr = ['b','r','g','y']
-        # for i in range(len(border_arr)):
-        #     x = border_arr[i]
-        #     x = np.array(x)
-        #     x = x.T
-        #     plt.scatter(x[0],x[1],c=color_arr[i], alpha = 0.5)
-            
-        # print(time.time() - t)
-        # plt.show()
+        color_arr = ['b','r','g','y']
+        for i in range(len(border_arr)):
+            x = border_arr[i]
+            model = KMeans(n_clusters=2,random_state=0, n_init="auto")
+            model.fit(x)
+            x = np.array(x)
+            x = x.T
+            first_cluster = []
+            second_cluster = []
+            for j in range(len(x[0])):
+                if model.labels_[j] == 0:
+                    first_cluster.append([x[0][j],x[1][j]])
+                else:
+                    second_cluster.append([x[0][j],x[1][j]])
+            first_cluster = np.array(first_cluster)
+            first_cluster = first_cluster.T
+            second_cluster = np.array(second_cluster)
+            second_cluster = second_cluster.T
+
+            args1, covar = curve_fit(self.mapping1, first_cluster[0], first_cluster[1]) 
+            a1, b1, c1, d1, e1 = args1[0], args1[1], args1[2], args1[3], args1[4]
+            args2, covar = curve_fit(self.mapping1, second_cluster[0], second_cluster[1]) 
+            a2, b2, c2, d2, e2 = args2[0], args2[1], args2[2], args2[3], args2[4]
+
+            y_fit1 = a1 * first_cluster[0]**4 + b1 * first_cluster[0]**3 + c1 *first_cluster[0]**2 + d1*first_cluster[0] + e1
+            y_fit2 = a2 * second_cluster[0]**4 + b2 * second_cluster[0]**3 + c2 *second_cluster[0]**2 + d2*second_cluster[0] + e2
+            plt.plot(first_cluster[0],y_fit1,c=color_arr[i],alpha=0.5)
+            plt.plot(second_cluster[0],y_fit2,c=color_arr[i],alpha=0.5)
         
-            joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.plot_eig_lvl)(m,par,h,proc) for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]])
+        print(time.time() - t)
+        plt.show()
+        
+            # joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.plot_eig_lvl)(m,par,h,proc) for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]])
         
         
         # for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
         #     self.plot_eig_lvl(m, par,1e-5)
+
+    def mapping1(self, values_x, a, b, c, d, e): 
+        return a * values_x**4 + b * values_x**3 + c * values_x**2 + d * values_x + e
+    
+    def sravn(self, ar1,ar2):
+        arr = []
+        i1 = 0
+        i2 = 0
+        while i1 != len(ar1) and i2 != len(ar2):
+            
+            if ar1[i1][0] <= ar2[i2][0]:
+                arr.append(ar1[i1])
+                i1+=1
+            else:
+                arr.append(ar2[i2])
+                i2+=1
+    
+        while i1 != len(ar1):
+            arr.append(ar1[i1])
+            i1+=1
+        while i2 != len(ar2):
+            arr.append(ar2[i2])
+            i2+=1
+            
+        return arr       
+
+    def sortMerge(self, arr):
+        if len(arr) <= 1:
+            return arr
+        l = self.sortMerge(arr[0:len(arr)//2])
+        r = self.sortMerge(arr[len(arr)//2:len(arr)])
+        return self.sravn( l , r )
 
     def find_tongue(self,m_space):
         t = time.time()
@@ -510,15 +564,15 @@ N_JOB = 8
 if __name__ == "__main__":
     tmp = [5, 1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]     [4.459709, 2.636232, 2, 1, 2.0944]
-    arr_par = [[1.823477, 3.646953, 2, 1, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944],
-    h = 1e-3
+    arr_par = [[4.459709, 2.636232, 2, 1, -np.pi],[1.823477, 4.459709, 1, 2, -np.pi]] #[4.459709, 2.636232, 2, 1, 2.0944],
+    h = 1e-2
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
-    m_space = np.linspace(0.1,50,500)
+    m_space = np.linspace(0.1,5,100)
     # tong.find_tongue(m_space)
-    # tong.find_border_tongue(m_space,arr_par,1e-2,0.5)
-    tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-6, 0.1) #самое правое значение от 0 до 1
+    tong.find_border_tongue(m_space,arr_par,1e-2,0.5)
+    # tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-6, 0.1) #самое правое значение от 0 до 1
     
     # tong.plot_eig(1,2.0944*2)
    
