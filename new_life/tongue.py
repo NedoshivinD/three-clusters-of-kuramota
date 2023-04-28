@@ -242,7 +242,7 @@ class Tongue(Reduc,Orig):
     def __get_start_sost__(self,m):
         self.N = 5
         self.K, self.M = self.param[2:4]
-        self.alpha = self.param[4]
+        self.alpha = -np.pi
         self.m = m
         
         eig_old, sost_ravn = self.__iter_sr_eig__()
@@ -254,7 +254,7 @@ class Tongue(Reduc,Orig):
         print(m)
         self.N = 5
         self.K, self.M = self.param[2:4]
-        self.alpha = self.param[4]
+        self.alpha = -np.pi
         sost_ravn = []
         self.m = m
         
@@ -319,9 +319,9 @@ class Tongue(Reduc,Orig):
             self.start_sost = self.__get_start_sost__(m_space[0])
 
             koord = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.work)(m) for m in m_space)
-            koord = np.array(koord)
+            # koord = np.array(koord)
             print("time work: ", time.time() - t)
-            for line in koord.T:
+            for line in koord:
                 if len(line) == 0:
                     continue
                 last_koord = line[0]
@@ -372,6 +372,13 @@ class Tongue(Reduc,Orig):
         
         # for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
         #     self.plot_eig_lvl(m, par,1e-5)
+
+    def plot_three_lvl_eig(self,m_space , param ,proc, h):
+        for par in param:
+            joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.plot_eig_lvl)(m,par,h,proc) for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]])
+        # for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
+        #     self.plot_eig_lvl(m, par,1e-5)
+    
 
     def mapping1(self, values_x, a, b, c, d, e): 
         return a * values_x**4 + b * values_x**3 + c * values_x**2 + d * values_x + e
@@ -560,21 +567,23 @@ class Tongue(Reduc,Orig):
         
         
 eps = 1e-7
-ogr_sost = 0.001
+ogr_sost = 1e-3
 N_JOB = 8
 # h_eps = 0.01
 
 if __name__ == "__main__":
     tmp = [5, 1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]     [4.459709, 2.636232, 2, 1, 2.0944]
-    arr_par = [[4.459709, 2.636232, 2, 1, -np.pi]] #[4.459709, 2.636232, 2, 1, 2.0944],
+    arr_par = [[4.459709, 2.636232, 2, 1, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944],
     h = 1e-2
     tong = Tongue(tmp,par,h)
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
-    m_space = np.linspace(0.1,5,100)
+    m_space = np.linspace(0.1,10,500)
     # tong.find_tongue(m_space)
-    tong.find_border_tongue(m_space,arr_par,1e-2,0.5)
+    tong.find_border_tongue(m_space,arr_par,1e-3,0.5)
+    tong.plot_three_lvl_eig(m_space,arr_par,1,1e-4)
+
     # tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-6, 0.1) #самое правое значение от 0 до 1
     
     # tong.plot_eig(1,2.0944*2)
