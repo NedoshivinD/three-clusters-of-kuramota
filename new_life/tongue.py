@@ -8,6 +8,8 @@ import joblib
 import time
 from sklearn.cluster import KMeans
 from scipy.optimize import curve_fit 
+import os, shutil, sys
+from scipy import interpolate
 
 
 
@@ -308,7 +310,38 @@ class Tongue(Reduc,Orig):
         
         return koord        
 
-    def find_border_tongue(self,m_space, arr_par,h,proc):
+    def create_path(self, way):
+        if not os.path.exists(way):
+            os.makedirs(way)
+
+    # чистим папку
+    def clean_path(self,way):
+        for filename in os.listdir(way):
+            file_path = os.path.join(way, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+    def razb_str(self,str):
+        all = []
+        tmp = ''
+        tmp_arr = []
+        flag = False
+
+        for c in str:
+            if c==',' or c==']':
+                tmp_arr.append(float(tmp))
+                tmp = ''
+                continue
+            tmp+=c
+        
+        return tmp_arr
+
+    def find_border_tongue(self,m_space, arr_par, way):
         border_arr = []
         for par in arr_par:
             tmp_arr = []
@@ -332,17 +365,32 @@ class Tongue(Reduc,Orig):
             tmp_arr=self.sortMerge(tmp_arr)
             border_arr.append(tmp_arr)
 
+            with open(way,'w',encoding="utf-8") as file:
+                for el in border_arr[0]:
+                    string = str(el[0]) + ',' + str(el[1]) +']'+'\n'
+                    file.write(string)
+
+        print(time.time() - t)
+
+    def plot_border_tongue(self,arr_par,way):
+        border_arr_from_file = []
+        for par in arr_par:
+            res = []
+            with open(way,'r') as file:
+                for line in file:
+                    res.append(np.array(self.razb_str(line.rstrip())))
+            print(res)
+            border_arr_from_file.append(res)
+        
         color_arr = ['b','r','g','y']
-        for i in range(len(border_arr)):
-            x = border_arr[i]
-            model = KMeans(n_clusters=2,random_state=0, n_init="auto")
-            model.fit(x)
+        for i in range(len(border_arr_from_file)):
+            x = border_arr_from_file[i]
             x = np.array(x)
             x = x.T
             first_cluster = []
             second_cluster = []
             for j in range(len(x[0])):
-                if model.labels_[j] == 0:
+                if x[0][j] <= 0:
                     first_cluster.append([x[0][j],x[1][j]])
                 else:
                     second_cluster.append([x[0][j],x[1][j]])
@@ -351,19 +399,62 @@ class Tongue(Reduc,Orig):
             second_cluster = np.array(second_cluster)
             second_cluster = second_cluster.T
 
-            args1, covar = curve_fit(self.mapping1, first_cluster[0], first_cluster[1]) 
-            a1, b1, c1, d1, e1 = args1[0], args1[1], args1[2], args1[3], args1[4]
-            args2, covar = curve_fit(self.mapping1, second_cluster[0], second_cluster[1]) 
-            a2, b2, c2, d2, e2 = args2[0], args2[1], args2[2], args2[3], args2[4]
+            plt.plot(first_cluster[0],y_fit1,alpha=0.5, c='r')
+            plt.scatter(first_cluster[0],first_cluster[1],c='b',alpha=0.5)
 
-            y_fit1 = a1 * first_cluster[0]**4 + b1 * first_cluster[0]**3 + c1 *first_cluster[0]**2 + d1*first_cluster[0] + e1
-            y_fit2 = a2 * second_cluster[0]**4 + b2 * second_cluster[0]**3 + c2 *second_cluster[0]**2 + d2*second_cluster[0] + e2
+            args1, covar = curve_fit(self.mapping3, first_cluster[0], first_cluster[1]) 
+            a1, b1, c1, = args1[0], args1[1], args1[2]
+            args2, covar = curve_fit(self.mapping3, second_cluster[0], second_cluster[1]) 
+            a2, b2, c2, = args2[0], args2[1], args2[2]
+
+            y_fit1 = a1 * np.exp(b1*first_cluster[0] + c1) 
+            y_fit2 = a2 * np.exp(b2*second_cluster[0] + c2) 
+            
+            # args1, covar = curve_fit(self.mapping2, first_cluster[0], first_cluster[1]) 
+            # a1, b1, c1, d1, e1 = args1[0], args1[1], args1[2], args1[3], args1[4]
+            # args2, covar = curve_fit(self.mapping2, second_cluster[0], second_cluster[1]) 
+            # a2, b2, c2, d2, e2 = args2[0], args2[1], args2[2], args2[3], args2[4]
+
+            # y_fit1 = a1 * first_cluster[0]**4 + b1 * first_cluster[0]**3 + c1 *first_cluster[0]**2 + d1*first_cluster[0] + e1
+            # y_fit2 = a2 * second_cluster[0]**4 + b2 * second_cluster[0]**3 + c2 *second_cluster[0]**2 + d2*second_cluster[0] + e2
+            
             plt.plot(first_cluster[0],y_fit1,c=color_arr[i],alpha=0.5)
             plt.plot(second_cluster[0],y_fit2,c=color_arr[i],alpha=0.5,label=arr_par[i])
             plt.xlabel(r'$\alpha$')
             plt.ylabel('m')
 
-        print(time.time() - t)
+            # plt.scatter(first_cluster[0],first_cluster[1],c='y',alpha=0.3)
+            # plt.scatter(second_cluster[0],second_cluster[1],c='y',alpha=0.3)
+            # убираем высеры -------------------------------------------------------------------------------------------------
+
+            # new_first_cluster = []
+            # for k in range(len(first_cluster[1])):
+            #     if first_cluster[1][k]-y_fit1[k] < 0.5:
+            #             new_first_cluster.append([first_cluster[0][k],first_cluster[1][k]])
+            # new_second_cluster = []
+            # for k in range(len(second_cluster[1])-1):
+            #     if second_cluster[1][k] < second_cluster[1][k+1] + 0.01 and second_cluster[0][k] < second_cluster[0][k+1] + 0.01:  #or abs(second_cluster[1][k]-y_fit2[k])<0.3
+            #         new_second_cluster.append([second_cluster[0][k],second_cluster[1][k]])
+            # new_first_cluster = np.array(new_first_cluster)
+            # new_first_cluster = new_first_cluster.T
+            # new_second_cluster = np.array(new_second_cluster)
+            # new_second_cluster = new_second_cluster.T
+            # args1, covar = curve_fit(self.mapping3, new_first_cluster[0], new_first_cluster[1]) 
+            # a1, b1, c1= args1[0], args1[1], args1[2]
+            # args2, covar = curve_fit(self.mapping3, new_second_cluster[0], new_second_cluster[1]) 
+            # a2, b2, c2 = args2[0], args2[1], args2[2]
+            # y_fit1_new = a1 * np.exp(b1*new_first_cluster[0] + c1) 
+            # y_fit2_new = a2 * np.exp(b2*new_second_cluster[0] + c2) 
+            # # plt.plot(new_first_cluster[0],y_fit1_new, c='r',alpha=0.5)
+            # plt.plot(second_cluster[0],y_fit2,c='b',alpha=0.5)
+            # plt.plot(new_second_cluster[0],y_fit2_new, c='r',alpha=0.5)
+            # plt.scatter(second_cluster[0],second_cluster[1],c='b',alpha=0.5)
+            # plt.scatter(new_second_cluster[0],new_second_cluster[1],c='r',alpha=0.5)
+            
+            # ---------------------------------------------------------------------------------------
+
+
+
         plt.legend()
         plt.show()
         
@@ -380,8 +471,14 @@ class Tongue(Reduc,Orig):
         #     self.plot_eig_lvl(m, par,1e-5)
     
 
-    def mapping1(self, values_x, a, b, c, d, e): 
+    def mapping1(self, values_x, a, b, c, d, e, f): 
+        return a * values_x**5 + b * values_x**4 + c * values_x**3 + d * values_x**2 + e*values_x + f
+    
+    def mapping2(self, values_x, a, b, c, d, e): 
         return a * values_x**4 + b * values_x**3 + c * values_x**2 + d * values_x + e
+    
+    def mapping3(self, values_x, a, b, c): 
+        return a * np.exp(b*values_x + c)
     
     def sravn(self, ar1,ar2):
         arr = []
@@ -393,6 +490,7 @@ class Tongue(Reduc,Orig):
                 arr.append(ar1[i1])
                 i1+=1
             else:
+
                 arr.append(ar2[i2])
                 i2+=1
     
@@ -568,21 +666,25 @@ class Tongue(Reduc,Orig):
         
 eps = 1e-7
 ogr_sost = 1e-3
-N_JOB = 8
+N_JOB = 6
 # h_eps = 0.01
 
 if __name__ == "__main__":
     tmp = [5, 1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]     [4.459709, 2.636232, 2, 1, 2.0944]
     arr_par = [[4.459709, 2.636232, 2, 1, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944],
-    h = 1e-2
+    h = 1e-4
     tong = Tongue(tmp,par,h)
+    way = f"new_life\\res\\n_{tong.N}\\border_tongue.txt"
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
-    m_space = np.linspace(0.1,10,500)
+    m_space = np.linspace(0.1,10,1000)
     # tong.find_tongue(m_space)
-    tong.find_border_tongue(m_space,arr_par,1e-3,0.5)
-    tong.plot_three_lvl_eig(m_space,arr_par,1,1e-4)
+
+    tong.find_border_tongue(m_space,arr_par,way)#,1e-3,0.5)
+    tong.plot_border_tongue(arr_par,way)
+
+    # tong.plot_three_lvl_eig(m_space,arr_par,1,1e-4)
 
     # tong.plot_eig_lvl(m_space[-1],[1.823477, 3.646953, 2, 1, 2.0944], 1e-6, 0.1) #самое правое значение от 0 до 1
     
