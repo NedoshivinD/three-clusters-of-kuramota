@@ -365,24 +365,47 @@ class Tongue(Reduc,Orig):
             tmp_arr=self.sortMerge(tmp_arr)
             border_arr.append(tmp_arr)
 
-            with open(way,'w',encoding="utf-8") as file:
-                for el in border_arr[0]:
+        with open(way,'w',encoding="utf-8") as file:
+            for border in border_arr:
+                for el in border:
                     string = str(el[0]) + ',' + str(el[1]) +']'+'\n'
                     file.write(string)
+                file.write('--' + '\n')
 
         print(time.time() - t)
 
+    def sort(self,arr):
+        res = []
+        c = 0
+        # for i in range(len(arr[0])-1):
+        while c != len(arr[0])-2:
+            if abs(arr[1][c] - arr[1][c+1]) < 0.1:
+                res.append([arr[0][c],arr[1][c]])
+            else:
+                res.append([arr[0][c+1],arr[1][c+1]])
+                c+=1
+            c += 1
+
+        res = np.array(res)
+        res = res.T
+        return res
+
     def plot_border_tongue(self,arr_par,way):
         border_arr_from_file = []
-        for par in arr_par:
-            res = []
-            with open(way,'r') as file:
-                for line in file:
-                    res.append(np.array(self.razb_str(line.rstrip())))
-            print(res)
-            border_arr_from_file.append(res)
+        # for par in arr_par:
+        res = []
+        with open(way,'r') as file:
+            for line in file:
+                if line.rstrip() == '--':
+                    border_arr_from_file.append(res)
+                    res = []
+                    continue
+                res.append(np.array(self.razb_str(line.rstrip())))
+        # print(res)
+        # border_arr_from_file.append(res)
         
         color_arr = ['b','r','g','y']
+        marker_arr = ['','--','-.',]
         for i in range(len(border_arr_from_file)):
             x = border_arr_from_file[i]
             x = np.array(x)
@@ -399,16 +422,36 @@ class Tongue(Reduc,Orig):
             second_cluster = np.array(second_cluster)
             second_cluster = second_cluster.T
 
-            plt.plot(first_cluster[0],y_fit1,alpha=0.5, c='r')
-            plt.scatter(first_cluster[0],first_cluster[1],c='b',alpha=0.5)
+            # new_second_cluster = self.sort(second_cluster)
 
-            args1, covar = curve_fit(self.mapping3, first_cluster[0], first_cluster[1]) 
-            a1, b1, c1, = args1[0], args1[1], args1[2]
-            args2, covar = curve_fit(self.mapping3, second_cluster[0], second_cluster[1]) 
-            a2, b2, c2, = args2[0], args2[1], args2[2]
+            # plt.scatter(first_cluster[0],first_cluster[1],c='b',alpha=0.3)
+            # plt.scatter(new_first_cluster[0],new_first_cluster[1],c='r',alpha=0.3)
 
-            y_fit1 = a1 * np.exp(b1*first_cluster[0] + c1) 
-            y_fit2 = a2 * np.exp(b2*second_cluster[0] + c2) 
+            t1 = np.polyfit(first_cluster[0],first_cluster[1],7)
+            f1 = np.poly1d(t1)
+            t2 = np.polyfit(second_cluster[0],second_cluster[1],7)
+            f2 = np.poly1d(t2)
+            new_x = - first_cluster[0]
+            plt.plot(new_x,f1(first_cluster[0]),marker_arr[i],c=color_arr[i],label=arr_par[i])
+            plt.plot(first_cluster[0],f1(first_cluster[0]),marker_arr[i],c=color_arr[i])
+            plt.xlabel(r'$\alpha$')
+            plt.ylabel('m')
+            plt.grid()
+            # plt.plot(new_second_cluster[0],f2(new_second_cluster[0]),c='y',alpha=0.5)
+            # plt.scatter(second_cluster[0],second_cluster[1],c='b',alpha=0.3)
+            # plt.scatter(new_second_cluster[0],new_second_cluster[1],c='r',alpha=0.3)
+            
+            
+            # plt.plot(new_x, f2(new_second_cluster[0]),c='r',alpha=0.5)
+            # args1, covar = curve_fit(self.mapping4, new_first_cluster[1], new_first_cluster[0]) 
+            # a1, b1 = args1[0], args1[1]
+            # args2, covar = curve_fit(self.mapping3, second_cluster[0], second_cluster[1]) 
+            # a2, b2, c2, d2 = args2[0], args2[1], args2[2], args2[3]
+
+            # y_fit1 = a1 + b1 * np.log(new_first_cluster[0])
+            # y_fit2 = a2 * np.exp(b2*second_cluster[0]**2 + c2*second_cluster[0] + d2) 
+            # plt.plot(new_first_cluster[0],y_fit1,alpha=0.5, c='y')
+            # plt.scatter(first_cluster[0],first_cluster[1],c='b',alpha=0.5)
             
             # args1, covar = curve_fit(self.mapping2, first_cluster[0], first_cluster[1]) 
             # a1, b1, c1, d1, e1 = args1[0], args1[1], args1[2], args1[3], args1[4]
@@ -418,10 +461,10 @@ class Tongue(Reduc,Orig):
             # y_fit1 = a1 * first_cluster[0]**4 + b1 * first_cluster[0]**3 + c1 *first_cluster[0]**2 + d1*first_cluster[0] + e1
             # y_fit2 = a2 * second_cluster[0]**4 + b2 * second_cluster[0]**3 + c2 *second_cluster[0]**2 + d2*second_cluster[0] + e2
             
-            plt.plot(first_cluster[0],y_fit1,c=color_arr[i],alpha=0.5)
-            plt.plot(second_cluster[0],y_fit2,c=color_arr[i],alpha=0.5,label=arr_par[i])
-            plt.xlabel(r'$\alpha$')
-            plt.ylabel('m')
+            # plt.plot(first_cluster[0],y_fit1,c=color_arr[i],alpha=0.5)
+            # plt.plot(second_cluster[0],y_fit2,c=color_arr[i],alpha=0.5,label=arr_par[i])
+            # plt.xlabel(r'$\alpha$')
+            # plt.ylabel('m')
 
             # plt.scatter(first_cluster[0],first_cluster[1],c='y',alpha=0.3)
             # plt.scatter(second_cluster[0],second_cluster[1],c='y',alpha=0.3)
@@ -470,15 +513,12 @@ class Tongue(Reduc,Orig):
         # for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
         #     self.plot_eig_lvl(m, par,1e-5)
     
-
-    def mapping1(self, values_x, a, b, c, d, e, f): 
-        return a * values_x**5 + b * values_x**4 + c * values_x**3 + d * values_x**2 + e*values_x + f
-    
-    def mapping2(self, values_x, a, b, c, d, e): 
-        return a * values_x**4 + b * values_x**3 + c * values_x**2 + d * values_x + e
     
     def mapping3(self, values_x, a, b, c): 
         return a * np.exp(b*values_x + c)
+    
+    def mapping4(self, values_x, a, b): 
+        return a + b * np.log(values_x)
     
     def sravn(self, ar1,ar2):
         arr = []
@@ -672,16 +712,17 @@ N_JOB = 6
 if __name__ == "__main__":
     tmp = [5, 1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]     [4.459709, 2.636232, 2, 1, 2.0944]
-    arr_par = [[4.459709, 2.636232, 2, 1, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944],
+    arr_par = [[4.459709, 2.636232, 2, 1, 2.0944],[3.646953, 1.823477, 2, 2, 3.14159]] #[4.459709, 2.636232, 2, 1, 2.0944],
     h = 1e-4
     tong = Tongue(tmp,par,h)
     way = f"new_life\\res\\n_{tong.N}\\border_tongue.txt"
+    way_tmp = f"new_life\\res\\n_{tong.N}\\border_tongue"
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
     m_space = np.linspace(0.1,10,1000)
     # tong.find_tongue(m_space)
 
-    tong.find_border_tongue(m_space,arr_par,way)#,1e-3,0.5)
+    # tong.find_border_tongue(m_space,arr_par,way)#,1e-3,0.5)
     tong.plot_border_tongue(arr_par,way)
 
     # tong.plot_three_lvl_eig(m_space,arr_par,1,1e-4)
