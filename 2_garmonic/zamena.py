@@ -6,7 +6,7 @@ from scipy.optimize import root
 import joblib 
 from numpy import linalg as LA
 import os, shutil
-
+from scipy.integrate import solve_ivp
 
 #Параметры системы 
 
@@ -31,7 +31,7 @@ class Equilibrium_states(object):
         self.t = np.linspace(0,100,100)
 
     # Сама система (возможно стоит использовать при расчете состояний равновесия)
-    def syst(self,param,t):
+    def syst(self,t,param):
         N = self.N
         M = self.M
         alpha = self.alpha
@@ -43,15 +43,56 @@ class Equilibrium_states(object):
         x,w = param #[x,y,w,v] - точки
         f = np.zeros(2)
         # x with 1 dot
-        f[0] = 1/m*(1/N * ((N - M)*(k1*np.sin(-x-alpha)+k2*np.sin(-2*x-beta)) - M*(k1*np.sin(x-alpha) + k2*np.sin(2*x - beta))))
+        f[0] = w
         # x with 2 dots
-        f[1] = w
+        f[1] = 1/m*(1/N * ((N - M)*(k1*np.sin(-x-alpha)+k2*np.sin(-2*x-beta)) - M*(k1*np.sin(x-alpha) + k2*np.sin(2*x - beta)) + (N-2*M)*(k1*np.sin(alpha) + k2*np.sin(beta))))
         
         return f
     
+    def syst_root(self,param):
+        N = self.N
+        M = self.M
+        alpha = self.alpha
+        beta = self.beta
+        m = self.m
+        k1 = self.k1
+        k2 = self.k2
+        
+        x,w = param #[x,y,w,v] - точки
+        f = np.zeros(2)
+        # x with 1 dot
+        f[0] = w
+        # x with 2 dots
+        f[1] = 1/m*(1/N * ((N - M)*(k1*np.sin(-x-alpha)+k2*np.sin(-2*x-beta)) - M*(k1*np.sin(x-alpha) + k2*np.sin(2*x - beta)) + (N-2*M)*(k1*np.sin(alpha) + k2*np.sin(beta))))
+        
+        return f
+    
+    def __trash_off__(self,arr):#!
+        tmp = []
+        tmp_res = []
+        res = []
+        par = arr[0][1:4]
+        for i in arr:
+            if np.abs(i[0]) == 0 or np.abs(i[3]) == 0:
+                continue
+            
+            if par == i[1:4]:
+                tmp = [round(np.sin(i[0])+np.cos(i[0]))]
+                if tmp not in tmp_res:
+                    tmp_res.append(tmp)
+                    res.append(i)
+            else :
+                tmp_res = []
+                par = i[1:4]
+                tmp = [round(np.sin(i[0])+np.cos(i[0]))]
+                tmp_res.append(tmp)
+                res.append(i)
+        return res
+    
     #поиск состояний равновесия для определенного параметра
     def state_equil(self,NMAB=[3,1,np.pi/2,np.pi/2]):
-        all_sol = [] 
+        all_sol = []
+        all_sol_full = [] 
         self.N,self.M,self.alpha,self.beta = NMAB
         ran_x=[0,2*np.pi]
         
@@ -59,13 +100,22 @@ class Equilibrium_states(object):
         w = 0
         
         for x in X:
-            sol = root(self.syst,[x,w],args=(0),method='lm')
+            sol = root(self.syst_root,[x,w],method='lm')
             xar,war = sol.x
             xar = round(xar,6)
-            if [xar,self.M,self.alpha,self.beta] not in all_sol and (xar>=0 and xar<2*np.pi):   
-                all_sol.append([xar,self.M,self.alpha,self.beta])
-                
-        return all_sol
+            if (xar>=0 and xar<2*np.pi):
+                    if [round(xar,3),self.M,round(self.alpha,5),round(self.beta,5)] not in all_sol:
+                        if round(xar,2) == round(2*np.pi,2):
+                            all_sol_full.append([0.0,self.M,round(self.alpha,5),round(self.beta,5),self.k1,self.k2])
+                            all_sol.append([0.0,self.M,round(self.alpha,5),round(self.beta,5),self.k1,self.k2])
+                        else:
+                            all_sol_full.append([xar,self.M,round(self.alpha,5),round(self.beta,5),self.k1,self.k2])
+                            all_sol.append([round(xar,3),self.M,round(self.alpha,5),round(self.beta,5),self.k1,self.k2]) 
+            # if [xar,self.M,self.alpha,self.beta] not in all_sol and (xar>=0 and xar<2*np.pi):   
+            #     all_sol.append([xar,self.M,self.alpha,self.beta])
+            
+        new_arr = self.__trash_off__(all_sol_full)      
+        return new_arr
     
     #поиск всех состояний равновесия
     def parall_st_eq(self):
@@ -92,14 +142,12 @@ class Equilibrium_states(object):
                 # file.write('--------------------------------------------------------\n')
     #матрица якоби
     def jakobi(self, param):
-        x,M,alpha,beta = param
+        x,M,alpha,beta,k1,k2 = param
         N = self.N
         m = self.m
-        k1 = self.k1
-        k2 = self.k2
         f = []
-        f.append([0, 1])
-        f.append([1/(m*N) *((N-M)*(-k1*np.cos(x+alpha) - 2*k2*np.cos(2*x+beta)) - M*(k1*np.cos(x-alpha) + 2*k2*np.cos(2*x-beta))), -1/m])
+        f.append([-1/m, 1/(m*N) *((N-M)*(-k1*np.cos(x+alpha) - 2*k2*np.cos(2*x+beta)) - M*(k1*np.cos(x-alpha) + 2*k2*np.cos(2*x-beta)))])
+        f.append([1, 0])
         arr = np.array(f)
         return(arr)
 
@@ -122,6 +170,9 @@ class Equilibrium_states(object):
                     for i in self.sost:
                         for j in i:
                             tmp = self.eigenvalues(j)
+                            lam = []
+                            for k in range(len(tmp)):
+                                lam.append(np.round(tmp[k],4))
                             z = 0
                             o = 0
                             for l in tmp.real:
@@ -131,7 +182,7 @@ class Equilibrium_states(object):
                                 
                                 if l < 0:
                                     z+=1
-                            text = str(j)+'\t'+str(tmp.real)+'\n' 
+                            text = str(j)+'\t'+str(lam)+'\n' 
                             if z == 2 and o == 0:
                                 file_s.write(text)
                             elif o==1:
@@ -155,12 +206,12 @@ class Equilibrium_states(object):
     #динамика, но сохраняем
     def rec_dinamic(self,way,z=1,params = [2.094395, 1, 2.0943951023931953,2.0943951023931953]):
         start_point=np.zeros(2)
-        start_point[0],self.M,self.alpha,self.beta = params 
+        start_point[0],self.M,self.alpha,self.beta,self.k1,self.k2 = params 
         start_point[0] += eps
-        tmp = integrate.odeint(self.syst, start_point, self.t)
-        plt.plot(self.t,tmp[:,0],label="x")
+        tmp = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1)
+        plt.plot(tmp.t,tmp.y[0],label="x")
         plt.xlim(0, 100)
-        plt.ylim(-10, 10)
+        plt.ylim(-10, 20)
         plt.legend()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
@@ -256,16 +307,16 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [5,1]
+    tmp = [6,1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    es.parall_st_eq() #подсчет всех состояний
-    # es.show_sost(key='all') #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
+    # es.parall_st_eq() #подсчет всех состояний
+    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
     
-    tmp = ['st','un_st','rz']
     
-    for i in tmp:
-        es.show_sost(key=i) #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
+    # tmp = ['st','un_st','rz']
+    # for i in tmp:
+    #     es.show_sost(key=i) #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
     
     
   
