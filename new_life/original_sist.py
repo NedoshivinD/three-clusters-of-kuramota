@@ -47,18 +47,19 @@ class Original_sist(object):
         
         fi1,fi2,fi3,v,w,u = param #[x,y,w,v] - точки
         f = np.zeros(6)
-        # fi1 with 1 dot
-        f[0] = 1/m*(omega + 1/N * ((- K)*np.sin(alpha) + M*np.sin(fi2 - fi1 - alpha) + (N-M-K)*np.sin(fi3 - fi1 - alpha)) - v)
-        # fi2 with 1 dot
-        f[1] = 1/m*(omega + 1/N * (-M*np.sin(alpha) + K*np.sin(fi1 - fi2 - alpha) + (N-M-K)*np.sin(fi3 - fi2 - alpha)) - w)
-        # fi3 with 1 dot
-        f[2] = 1/m*(omega + 1/N * (-(N-M-K)*np.sin(alpha) + K*np.sin(fi1 - fi3 - alpha) + M*np.sin(fi2 - fi3 - alpha)) - u)
-        # fi1 with 2 dots
-        f[3] = v
-        # fi2 with 2 dots
-        f[4] = w
-        # fi3 with 2 dots
-        f[5] = u
+
+        # fi1 with 1 dots
+        f[0] = v
+        # fi2 with 1 dots
+        f[1] = w
+        # fi3 with 1 dots
+        f[2] = u
+        # fi1 with 2 dot
+        f[3] = 1/m*(omega + 1/N * ((- K)*np.sin(alpha) + M*np.sin(fi2 - fi1 - alpha) + (N-M-K)*np.sin(fi3 - fi1 - alpha)) - v)
+        # fi2 with 2 dot
+        f[4] = 1/m*(omega + 1/N * (-M*np.sin(alpha) + K*np.sin(fi1 - fi2 - alpha) + (N-M-K)*np.sin(fi3 - fi2 - alpha)) - w)
+        # fi3 with 3 dot
+        f[5] = 1/m*(omega + 1/N * (-(N-M-K)*np.sin(alpha) + K*np.sin(fi1 - fi3 - alpha) + M*np.sin(fi2 - fi3 - alpha)) - u)
         
         return f
     
@@ -75,19 +76,18 @@ class Original_sist(object):
             phi[i] = start_point[i]
             v[i] = start_point[i+N]
         f = np.zeros(2*N)
-
-        f = np.zeros(2*N)
         
         for j in range(N):
             s = 0
             for phi_i in phi:
                 s += np.sin(phi_i - phi[j] - alpha)
             
-            f[j] = 1/N*s + omega - v[j]
+            f[j] = 1/m * (1/N*s + omega - v[j])
             
             f[j+N] = v[j]
             
         return f
+    
     #матрица Якоби
     def jakobi(self, param):
 
@@ -118,6 +118,7 @@ class Original_sist(object):
         f[4]=[0, 1.0, 0, 0, 0, 0]
         f[5]=[0, 0, 1.0, 0, 0, 0]
         return f
+    
     def jacobi_full(self,start_point):
         N = self.N
         m = self.m
@@ -501,6 +502,7 @@ class Original_sist(object):
             tmp = self.rec_dinamic(params = arr[i],way = way_k,z=i+1)
             self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp.y, t = tmp.t)
             # self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
+    
              
     def sost_in_fi(self, key = 'st'):
         n = self.N
@@ -538,7 +540,7 @@ class Original_sist(object):
         start_phi = 1
         pdf = PdfPages(way + f"\\map_N={self.N}.pdf")
         for x in res:
-            phi1 = self.up_arr(start_phi,x,5,5)
+            phi1 = self.up_arr(start_phi,x,self.N,self.N)
             alpha = x[4]
             t_amx = 10000
             
