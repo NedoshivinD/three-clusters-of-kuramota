@@ -139,7 +139,7 @@ class Equilibrium_states(object):
         M = np.linspace(1,N-2,N-2, dtype = 'int')
         K = np.linspace(N-2,1,N-2, dtype = 'int')
         
-        alpha = np.linspace(0,np.pi,4)
+        alpha = np.linspace(0,2*np.pi,4)
         self.sost = joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.state_equil)([N,k,m,al]) for k in K for m in M for al in alpha if m+k<N)
         
         self.rec_st_and_unst_st_eq()
@@ -244,13 +244,16 @@ class Equilibrium_states(object):
         start_point[1] += eps
         # tmp = integrate.odeint(self.syst, start_point, self.t)
         tmp = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1)
-        plt.plot(tmp.t,tmp.y[0],label="x")
-        plt.plot(tmp.t,tmp.y[1],label="y", linestyle = '--')
+        plt.plot(tmp.t,tmp.y[0],label='X = ' + r'$\varphi_1 - \varphi_2$')
+        plt.plot(tmp.t,tmp.y[1],label='Y = ' +r'$\varphi_1 - \varphi_3$', linestyle = '--')
         # plt.plot(self.t,tmp[:,0],label="x")
         # plt.plot(self.t,tmp[:,1],label="y", linestyle = '--')
         plt.xlim(0, 100)
         plt.ylim(-10, 20)
+        plt.xlabel('t')
+        plt.ylabel(r'$\varphi_1 - \varphi_i$')
         plt.legend()
+        plt.grid()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
 
@@ -345,9 +348,9 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [5 ,0.00001]
+    tmp = [9, 1]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     es.parall_st_eq() #подсчет всех состояний
-    es.show_sost(key='all') #сохранение графиков #ключевые слов "all", "st", "un_st"
+    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st"
   

@@ -59,7 +59,7 @@ class Dinamic(object):
         self.alpha = par[0]
         self.k = par[1]
         # way = way + "\\"
-        way = f"new_life\\res\\n_{ors.N}\\dinamic_sost\\"
+        way = f"new_life\\res\\n_{self.N}\\dinamic_sost\\"
         start_point=np.zeros(4)
         start_point[0] = x[0] + eps
         start_point[1] = x[1] + eps
@@ -126,18 +126,18 @@ if __name__ == "__main__":
     din = Dinamic(p = tmp)
     way = f"new_life\\res\\n_{din.N}\\dinamic_sost"
     # din.paral(way)
-    res = din.drow_map_al_lam(-np.pi,-3.01236, 2.356194490192345)
-    print(res)
+    # res = din.drow_map_al_lam(-np.pi,-3.01236, 2.356194490192345)
+    # print(res)
     
-    # res = ors.calculation([-3.14059, -3.14259],[3.141592653589793,1])
-    # plt.plot(res[2],np.angle(np.exp(1j*res[0])),label="x")
-    # plt.plot(res[2],np.angle(np.exp(1j*res[1])),label="y", linestyle = '--')
-    # plt.xlim(0, 100)
-    # plt.ylim(-np.pi-0.2, np.pi+0.2)
-    # par = [-3.14059, -3.14259, 2, 1, 3.141592653589793, 1.0]
-    # plt.text(x=50,y=np.pi+0.3, horizontalalignment = 'center', s="x = " + str(par[0]) + ", y = " + str(par[1]) +  ", K = " + str(par[2]) + ", M = " + str(par[3]) + ", alpha = " + str(par[4]) + ", k = " + str(par[5]))
-    # plt.legend()
-    # plt.show()
+    res = din.calculation([-3.14059, -3.14259],[3.141592653589793,1])
+    plt.plot(res[2],np.angle(np.exp(1j*res[0])),label="x")
+    plt.plot(res[2],np.angle(np.exp(1j*res[1])),label="y", linestyle = '--')
+    plt.xlim(0, 100)
+    plt.ylim(-np.pi-0.2, np.pi+0.2)
+    par = [-3.14059, -3.14259, 2, 1, 3.141592653589793, 1.0]
+    plt.text(x=50,y=np.pi+0.3, horizontalalignment = 'center', s="x = " + str(par[0]) + ", y = " + str(par[1]) +  ", K = " + str(par[2]) + ", M = " + str(par[3]) + ", alpha = " + str(par[4]) + ", k = " + str(par[5]))
+    plt.legend()
+    plt.show()
     
 #напиши калькулятор
 

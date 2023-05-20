@@ -9,6 +9,8 @@ import os, shutil, sys
 from sympy import Matrix, pretty
 from scipy.integrate import solve_ivp
 import ast
+from matplotlib.backends.backend_pdf import PdfPages
+
 
 #Параметры системы 
 
@@ -290,13 +292,14 @@ class Original_sist(object):
         start_point[5] = eps
         
         # tmp = integrate.odeint(self.syst, start_point, self.t)
-        res = solve_ivp(self.syst, [0,Max_time],start_point)
+        res = solve_ivp(self.syst, [0,Max_time],start_point,t_eval=self.t)
+        
         plt.plot(res.t,np.sin(res.y[0]),label="sin(fi1)")
         plt.plot(res.t,np.sin(res.y[1]),label="sin(fi2)", linestyle = '--')
         plt.plot(res.t,np.sin(res.y[2]),label="sin(fi3)", linestyle = '-.')
         # plt.xlim(0, 100)
-        plt.ylim(-1, 1)
-        plt.text(x=Max_time//2,y=1.12, horizontalalignment = 'center', s="phi 1 = " + str(par[0]) + ", phi 2 = " + str(par[1]) + ", phi 3 = " + 
+        # plt.ylim(-1, 1)
+        plt.text(x=Max_time//2,y=3.5, horizontalalignment = 'center', s="phi 1 = " + str(par[0]) + ", phi 2 = " + str(par[1]) + ", phi 3 = " + 
                 str(par[2]) + ", K = " + str(par[3]) + ", M = " + str(par[4]) + ", alpha = " + str(par[5]))
         plt.legend()
         plt.show()
@@ -316,9 +319,9 @@ class Original_sist(object):
         plt.plot(tmp.t,np.sin(tmp.y[0]),label="sin(fi1)")
         plt.plot(tmp.t,np.sin(tmp.y[1]),label="sin(fi2)", linestyle = '--')
         plt.plot(tmp.t,np.sin(tmp.y[2]),label="sin(fi3)", linestyle = '-.')
-        # plt.plot(tmp.t,tmp.y[3],label="fi1_with_dot")
-        # plt.plot(tmp.t,tmp.y[4],label="fi2_with_dot", linestyle = '--')
-        # plt.plot(tmp.t,tmp.y[5],label="fi3_with_dot", linestyle = '-.')
+        # plt.plot(tmp.t,tmp.y[0],label="fi1_with_dot")
+        # plt.plot(tmp.t,tmp.y[1],label="fi2_with_dot", linestyle = '--')
+        # plt.plot(tmp.t,tmp.y[2],label="fi3_with_dot", linestyle = '-.')
         # plt.xlim(0, 100)
         # plt.ylim(0, 1)
         plt.xlabel("t")
@@ -388,9 +391,12 @@ class Original_sist(object):
             real_deal_new = new_lam.real
             not_real_deal_new = new_lam.imag
 
-            plt.scatter(real_deal_old, not_real_deal_old, c='b', marker='o')
-            plt.scatter(real_deal_new, not_real_deal_new, c='r', marker='x')
+            plt.scatter(real_deal_old, not_real_deal_old, c='b', marker='o', label='собственные числа редуцированной системы')
+            plt.scatter(real_deal_new, not_real_deal_new, c='r', marker='x', label='собственные числа полной системы')
             plt.grid()
+            plt.legend()
+            plt.xlabel(r'Re($\lambda$)')
+            plt.ylabel(r'Im($\lambda$)')
             # plt.show()
             plt.savefig(way + f'graph_{i+1}.png')
             plt.clf()
@@ -530,7 +536,7 @@ class Original_sist(object):
         ors.all_new_lam(key)
         tmp_count = 0
         start_phi = 1
-        
+        pdf = PdfPages(way + f"\\map_N={self.N}.pdf")
         for x in res:
             phi1 = self.up_arr(start_phi,x,5,5)
             alpha = x[4]
@@ -542,9 +548,11 @@ class Original_sist(object):
                 
             # print(phi1)
             print(str(tmp_count+1)+":")
-            self.plot_warm_map([phi1,eps,alpha,t_amx], way,tmp_count)
+            
+            self.plot_warm_map([phi1,eps,alpha,t_amx], way,tmp_count,pdf)
+            
             tmp_count+=1
-
+        pdf.close()
         # ress = self.order_parameter(res_fi)
         # self.show_sost(arr = ress, key=key)
 
@@ -720,7 +728,7 @@ class Original_sist(object):
             tmp = tmp-arr[i]
         return res
 
-    def plot_warm_map(self, param, way, count):
+    def plot_warm_map(self, param, way, count,pdf):
     
         phi,eps,alpha,t_max = param
         
@@ -745,13 +753,18 @@ class Original_sist(object):
             matrix[l] = matrix[l] - matrix[0]
             l-=1
 
+
         # matrix += eps_map
-
+        fig, ax = plt.subplots()
         matrix = np.angle(np.exp(1j*matrix))
-        print(matrix)
-        plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
-
-        plt.savefig(way + f'graph_{count+1}.png')
+        # print(matrix)
+        p = ax.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
+        fig.colorbar(p,label=r'$\varphi_1 - \varphi_i$')
+        plt.xlabel("t")
+        plt.ylabel("N")
+        pdf.savefig()
+        plt.close(fig)
+        # plt.savefig(way + f'graph_{count+1}.png')
         plt.clf()
 
 
@@ -759,7 +772,8 @@ class Original_sist(object):
 
 
 if __name__ == "__main__":
-    tmp = [5 , 1, 1]
+    tmp = [9, 1, 1]
     ors = Original_sist(p = tmp, fi = 0)
-    # ors.dinamic(params=[[np.pi, 0.0, 1, 2, 2]])
+    # ors.dinamic(params=[[0.0, 0.0, 3, 1, 0.0]])
+    
     ors.sost_in_fi(key='st')
