@@ -3,6 +3,10 @@ import threading
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import math
+from supp_func import *
+import random
+
+
 
 n_job = 4
 
@@ -68,14 +72,14 @@ def up_arr(start_phi,arr,N,num_elems,eps):
     tmp +=start_phi
     
     for i in range(razb[0]):
-        res = np.append(res,tmp+eps)
+        res = np.append(res,tmp+random.uniform(-1, 1)*1e-1)
     
     tmp-= start_phi
     
     tmp = tmp+arr[0]
     
     for i in range(razb[1]):
-        res = np.append(res, start_phi - tmp)
+        res = np.append(res, start_phi - tmp + random.uniform(-1, 1)*1e-1)
         
     tmp = tmp-arr[0]
     
@@ -111,17 +115,28 @@ def work(param):
     
     matrix = np.angle(np.exp(1j*matrix))
     print(matrix)
-    plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
+    # plt.yticks(yticks,size=7)
+    # plt.figure(figsize=(cm_to_inch(40),cm_to_inch(60)))
+    # plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*100,0,len(phi)*10], aspect=4)
+    fig, ax = plt.subplots()
+    # matrix = np.angle(np.exp(1j*matrix))
+    # print(matrix)
+    p = ax.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
+    fig.colorbar(p,label=r'$\varphi_1 - \varphi_i$')
+    plt.xlabel("t")
+    plt.ylabel("N")
     plt.show()
     
     
     # plt.savefig('tmp.svg')
     
 def heat_map(par):
+    tmp = razb_config()
+    eps = 1e-5
     low_arr = par
     start_phi = 1
     eps = 1e-7
-    phi1 = up_arr(start_phi,low_arr,5,5,eps)
+    phi1 = up_arr(start_phi,low_arr,tmp[0],tmp[0],eps)
     alpha = low_arr[2]
     beta = low_arr[3]
     k1 = low_arr[4]
@@ -133,27 +148,29 @@ def heat_map(par):
     
 if __name__ == "__main__":
     
-    eps = 0#1e-5
-    #[3.141593, 0.0, 2, 2, 3.14159]         40 неуст
-    #[3.141593, 3.141593, 3, 1, 3.14159]    4  уст
-    low_arr = [2.094395, 2, 3.14159, 3.14159, 1, 1]
-                                                        #0 0 0 2.474646 2.474646              0 0 2.474646 2.474646 0
+
+    tmp = razb_config()
+    eps = 1e-5
+
+    low_arr = [1.609267, 2, 0.0, 2.0944, 1, 1]
+    
     start_phi = 1
     eps = 1e-1
-    phi1 = up_arr(start_phi,low_arr,5,5,eps)
-    # phi1[3] +=0.000001
+    phi1 = up_arr(start_phi,low_arr,tmp[0],tmp[0],eps)
     alpha = low_arr[2]
     beta = low_arr[3]
     k1 = low_arr[4]
     k2 = low_arr[5]
     t_amx = 10000
-    
-    # phi1 = [2.474646, 2.474646, 2.474646, 0, 0]
-    # alpha = 0
-    
-        
-    # print(phi1)
+
     work([phi1,eps,alpha,beta,k1,k2,t_amx])
+
+    # param = [1.959579, 2, 2.0944, 3.14159, 1, 1]
+    # way= f"2_garmonic\\res\\n_{tmp[0]}\\tmp\\{param}\\"
+    # arr = [1,2,3]
+    # with open(way+'text.txt','w') as f:
+    #     f.writelines(str(arr))
+    # print(arr)
     
     
     

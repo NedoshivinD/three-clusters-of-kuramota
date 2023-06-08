@@ -7,13 +7,14 @@ import joblib
 from numpy import linalg as LA
 import os, shutil
 from scipy.integrate import solve_ivp
+from supp_func import razb_config
 
 #Параметры системы 
 
 N_JOB = 4
 col_razb = 10
 MAX_GRAPH = 50
-eps = 0.1
+eps = 0.
 
 class Equilibrium_states(object):
     
@@ -73,7 +74,7 @@ class Equilibrium_states(object):
         res = []
         par = arr[0][1:4]
         for i in arr:
-            if np.abs(i[0]) == 0 or np.abs(i[3]) == 0:
+            if np.abs(i[0]) == 0 or np.abs(i[0])> np.pi:# or np.abs(i[3]) == 0:
                 continue
             
             if par == i[1:4]:
@@ -120,7 +121,7 @@ class Equilibrium_states(object):
     #поиск всех состояний равновесия
     def parall_st_eq(self):
         N = self.N
-        M = np.linspace(1,N-2,N-2, dtype = 'int')
+        M = np.linspace(1,int(N/2),int(N/2), dtype = 'int')
         
         alpha = np.linspace(0,np.pi,4)
         beta = np.linspace(0,np.pi,4)
@@ -159,14 +160,15 @@ class Equilibrium_states(object):
     
     #Сохранение устойчивых и неустойчивых состояний равновесия 
     def rec_st_and_unst_st_eq(self):
-        name_s = f"2_garmonic\\res\\n_{self.N}\\stable_{self.N}.txt"
-        name_n = f"2_garmonic\\res\\n_{self.N}\\non_stable_{self.N}.txt"
-        name_o = f"2_garmonic\\res\\n_{self.N}\\range_zero_{self.N}.txt" 
-        self.create_path(name_s[:18])
-        self.create_path(name_n[:18])          
-        with open(name_s,"w",encoding="utf-8") as file_s: 
-            with open(name_n,"w",encoding="utf-8") as file_n:
-                with open(name_o,"w",encoding="utf-8") as file_o: 
+        name = f"2_garmonic\\res\\n_{self.N}"
+        self.create_path(name)
+        
+        stable = f'\\stable_{self.N}.txt'
+        non_stable = f'\\non_stable_{self.N}.txt'
+        range_zero = f'\\range_zero_{self.N}.txt'
+        with open(name + stable,"w",encoding="utf-8") as file_s: 
+            with open(name + non_stable,"w",encoding="utf-8") as file_n:
+                with open(name + range_zero,"w",encoding="utf-8") as file_o: 
                     for i in self.sost:
                         for j in i:
                             tmp = self.eigenvalues(j)
@@ -199,7 +201,7 @@ class Equilibrium_states(object):
         tmp = integrate.odeint(self.syst, start_point, self.t)
         plt.plot(self.t,tmp[:,0],label="x")
         plt.xlim(0, 100)
-        plt.ylim(-10, 10)
+        plt.ylim(-np.pi, np.pi)
         plt.legend()
         plt.show()
     
@@ -211,7 +213,10 @@ class Equilibrium_states(object):
         tmp = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1)
         plt.plot(tmp.t,tmp.y[0],label="x")
         plt.xlim(0, 100)
-        plt.ylim(-10, 20)
+        plt.ylim(-np.pi, np.pi)
+        plt.xlabel('t')
+        plt.ylabel(r'$x$')
+        plt.title("Редуцированная система")
         plt.legend()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
@@ -256,9 +261,7 @@ class Equilibrium_states(object):
         arr  = self.razbor_txt(name)
         
         rang = len(arr)
-        if rang > MAX_GRAPH:
-            rang = MAX_GRAPH
-            
+
         for i in range(rang):
             self.rec_dinamic(params = arr[i],way = way,z=i+1)
 
@@ -307,11 +310,12 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [6,1]
+    conf = razb_config()
+    tmp = conf[:2]
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
-    # es.parall_st_eq() #подсчет всех состояний
-    es.show_sost(key='st') #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
+    es.parall_st_eq() #подсчет всех состояний
+    es.show_sost(key='un_st') #сохранение графиков #ключевые слов "all", "st", "un_st","rz"
     
     
     # tmp = ['st','un_st','rz']

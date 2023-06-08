@@ -181,6 +181,7 @@ class Tongue(Reduc,Orig):
             for j in range(len(eig[0])):
                 if np.abs(eig[1][i]-eig[0][j]) < 1e-2:
                     f = True
+                    break
             if f:
                 f= False
             else:
@@ -706,23 +707,23 @@ class Tongue(Reduc,Orig):
         
 eps = 1e-7
 ogr_sost = 1e-3
-N_JOB = 6
+N_JOB = 10
 # h_eps = 0.01
 
 if __name__ == "__main__":
     tmp = [5, 1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]     [4.459709, 2.636232, 2, 1, 2.0944]
     arr_par = [[4.459709, 2.636232, 2, 1, 2.0944],[3.646953, 1.823477, 2, 2, 3.14159]] #[4.459709, 2.636232, 2, 1, 2.0944],
-    h = 1e-4
+    h = 1e-3
     tong = Tongue(tmp,par,h)
     way = f"new_life\\res\\n_{tong.N}\\border_tongue.txt"
-    way_tmp = f"new_life\\res\\n_{tong.N}\\border_tongue"
+    way_tmp = f"new_life\\res\\n_{tong.N}\\border_tongue"   
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
-    m_space = np.linspace(0.1,10,1000)
+    m_space = np.linspace(0.1,10,100)
     # tong.find_tongue(m_space)
 
-    # tong.find_border_tongue(m_space,arr_par,way)#,1e-3,0.5)
+    tong.find_border_tongue(m_space,arr_par,way)#,1e-3,0.5)
     tong.plot_border_tongue(arr_par,way)
 
     # tong.plot_three_lvl_eig(m_space,arr_par,1,1e-4)

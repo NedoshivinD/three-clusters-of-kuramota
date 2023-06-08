@@ -7,15 +7,11 @@ import joblib
 from numpy import linalg as LA
 import os, shutil
 from scipy.integrate import solve_ivp
-
+from supp_func import razb_config
+from matplotlib.backends.backend_pdf import PdfPages
+import time
 
 #Параметры системы 
-
-col_razb = 10
-MAX_GRAPH = 50
-eps = 0.1
-eps_map = 1e-1
-Max_time = 100
 
 
 class Original_sist(object):
@@ -34,9 +30,12 @@ class Original_sist(object):
         self.ust = []
         self.un_ust = []
         self.t = np.linspace(0,100,100)
+        self.rand_one = 0
+        self.rand_two = 0
+        self.rand_koleb = 0
 
     # Сама система (возможно стоит использовать при расчете состояний равновесия)
-    def syst(self,t,param):
+    def syst_orig(self,t,param):
         N = self.N
         M = self.M
         omega = self.omega
@@ -132,10 +131,10 @@ class Original_sist(object):
                         if k == j:
                             continue
                         else:
-                            sum+=k1*np.cos(phi[k]-phi[j]-alpha) + k2*2*np.cos(2*(phi[k]-phi[j])-beta)
+                            sum+=k1*np.cos(phi[j]-phi[k]+alpha) + k2*2*np.cos(2*(phi[j]-phi[k])+beta)
                     tmp_arr[j] = - 1/(m*N) * sum
                 else:
-                    tmp_arr[j] = 1/(m*N) * (k1*np.cos(phi[j]-phi[i]-alpha) + k2*2*np.cos(2*(phi[j]-phi[i])-beta))
+                    tmp_arr[j] = 1/(m*N) * (k1*np.cos(phi[j]-phi[i]+alpha) + k2*2*np.cos(2*(phi[j]-phi[i])+beta))
 
             derivatives = np.append(derivatives,tmp_arr)
         derivatives = derivatives.reshape((N,N))
@@ -273,25 +272,26 @@ class Original_sist(object):
 
 
     #динамика для одной точки
-    def dinamic(self, params = [np.pi, 1, np.pi/3, np.pi/3]):
+    def dinamic_klast(self, params = [np.pi, 1, np.pi/3, np.pi/3]):
         par = self.anti_zamena(arr=params)
         par = np.reshape(par, (len(par[0])))
         start_point=np.zeros(4)
-        start_point[0],start_point[1], self.M,self.alpha, self.beta = par 
+        start_point[0],start_point[1], self.M,self.alpha, self.beta,self.k1,self.k2 = par 
         start_point[0] = start_point[0]+eps
         start_point[1] = start_point[1]+eps
         start_point[2] = eps
         start_point[3] = eps
         
         # tmp = integrate.odeint(self.syst, start_point, self.t)
-        res = solve_ivp(self.syst, [0,Max_time],start_point)
+        res = solve_ivp(self.syst_orig, [0,Max_time],start_point)
         plt.plot(res.t,np.sin(res.y[0]),label="sin(fi1)")
         plt.plot(res.t,np.sin(res.y[1]),label="sin(fi2)", linestyle = '--')
         # plt.xlim(0, 100)
         # plt.ylim(0, 100)
         plt.ylim(-1, 1)
-        plt.text(x=Max_time//2,y=1.12, horizontalalignment = 'center', s="phi 1 = " + str(par[0]) + ", phi 2 = " + str(par[1]) +
-                 ", M = " + str(par[2]) + ", alpha = " + str(par[3]) + ", beta = " + str(par[4])+ ", k1 = " + str(par[5])+ ", k2 = " + str(par[6]))
+        plt.xlabel("t")
+        plt.ylabel(r"$sin(\phi_i)$")
+
         plt.legend()
         plt.show()
     
@@ -301,18 +301,19 @@ class Original_sist(object):
         start_point[0],start_point[1], self.M,self.alpha, self.beta,self.k1,self.k2 = par 
         start_point[0] += eps
         start_point[1] += eps
+        t = np.linspace(0,100,1000)
         # tmp = integrate.odeint(self.syst, start_point, self.t)
-        tmp = solve_ivp(self.syst, [0, Max_time],start_point, t_eval=self.t, trol=1e-11,atol=1e-11)
+        tmp = solve_ivp(self.syst_orig, [0, Max_time],start_point, t_eval=t, trol=1e-11,atol=1e-11)
         # for x in tmp:
         #     x[0] = np.sin()
-        plt.plot(tmp.t,np.sin(tmp.y[0]),label="sin(fi1)")
-        plt.plot(tmp.t,np.sin(tmp.y[1]),label="sin(fi2)", linestyle = '--')
+        plt.plot(tmp.t,np.sin(tmp.y[0]),label=r"$sin(\phi_1)$")
+        plt.plot(tmp.t,np.sin(tmp.y[1]),label=r"$sin(\phi_2)$", linestyle = '--')
         # plt.xlim(0, 100)
         # plt.ylim(0, 1)
         plt.xlabel("t")
-        plt.ylabel("sin(phi[i])")
-        plt.text(x=Max_time//2,y=1.12, horizontalalignment = 'center', s="phi 1 = " + str(par[0]) + ", phi 2 = " + str(par[1]) +
-                 ", M = " + str(par[2]) + ", alpha = " + str(par[3]) + ", beta = " + str(par[4])+ ", k1 = " + str(par[5])+ ", k2 = " + str(par[6]))
+        plt.ylabel(r"$sin(\phi_i)$")
+        # plt.text(x=Max_time//2,y=1.12, horizontalalignment = 'center', s="phi 1 = " + str(par[0]) + ", phi 2 = " + str(par[1]) +
+        #          ", M = " + str(par[2]) + ", alpha = " + str(par[3]) + ", beta = " + str(par[4])+ ", k1 = " + str(par[5])+ ", k2 = " + str(par[6]))
         plt.legend()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
@@ -322,7 +323,10 @@ class Original_sist(object):
         R1 = self.order_parameter(arr)
         plt.plot(t, R1)
         # plt.xlim(0, 100)
-        plt.ylim(0, 1.1)
+        plt.ylim(-0.1, 1.1)
+        plt.xlabel("t")
+        plt.ylabel('z')
+        plt.title('order parametr')
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
 
@@ -334,10 +338,11 @@ class Original_sist(object):
         start_point[0] += eps
         start_point[1] += eps
         fi1_arr = np.linspace(0, 2*np.pi, self.N_fi1)
+        t = np.linspace(0,100,1000)
         for i in range(self.N_fi1):
             start_point[0] = fi1_arr[i]
             new_points = self.anti_zamena_2([start_point[0],x, start_point[2],start_point[3],start_point[4],start_point[5],start_point[6]])
-            tmp = integrate.odeint(self.syst, new_points, self.t)
+            tmp = integrate.odeint(self.syst_orig, new_points, t)
             # c = tmp[:,0] - tmp[:,1]# - tmp[:,0]
             plt.plot(self.t,tmp[:,0],label="fi1", c='r', alpha = 0.5)
             plt.plot(self.t,tmp[:,1],label="fi2", c='b', alpha = 0.5)
@@ -358,6 +363,7 @@ class Original_sist(object):
         way += "\\lams"
         self.create_path(way)
         self.clean_path(way)
+        
         way += "\\"
         for i in range(len(old_lams)):
             old_lam = np.array(old_lams[i])
@@ -367,9 +373,12 @@ class Original_sist(object):
             real_deal_new = new_lam.real
             not_real_deal_new = new_lam.imag
 
-            plt.scatter(real_deal_old, not_real_deal_old, c='b', marker='o')
-            plt.scatter(real_deal_new, not_real_deal_new, c='r', marker='x')
+            plt.scatter(real_deal_old, not_real_deal_old, c='b', marker='o',label = r'$\lambda$ reduced')
+            plt.scatter(real_deal_new, not_real_deal_new, c='r', marker='x',label = r'$\lambda$ original')
             plt.grid()
+            plt.legend()
+            plt.xlabel(r'Re($\lambda$)')
+            plt.ylabel(r'Im($\lambda$)')
             # plt.show()
             plt.savefig(way + f'graph_{i+1}.png')
             plt.clf()
@@ -392,74 +401,49 @@ class Original_sist(object):
     #ключевые слов "all", "st", "un_st"
     def show_sost(self,arr, key, res):
         n = self.N
-        name = "2_garmonic\\res\\n_\\"
+        name = f"2_garmonic\\res\\n_{self.N}\\"
         way = name
         rang = len(arr)
         if rang > MAX_GRAPH:
             rang = MAX_GRAPH
+
+        if key == 'st':
+            way_all = way + "stable\\"
+        elif key == 'un_st':
+            way_all = way+"unstable\\"
+        elif key == 'rz':
+            way_all = way+"range_zero\\"
+        elif key == 'all':
+            way_all = way+"all\\"
         
-        way1 = way+"stable\\"
-        way2 = way+"unstable\\"
-        way3 = way+"range_zero\\"
-        way4 = way+"all\\"
-        sdvig2 = 17
-        way_or = 'origin\\'
-        way_par = 'order_params\\'
-        way_map = 'map\\'
+        way_par = way_all + 'order_params\\'
+        way_map = way_all + 'map\\'
+        way_orig = way_all + 'origin\\'
 
-        way_m1 = way1[0:sdvig2]+f"{n}"+way1[sdvig2:] + way_map
-        way_p1 = way1[0:sdvig2]+f"{n}"+way1[sdvig2:] + way_par
-        way1 = way1[0:sdvig2]+f"{n}"+way1[sdvig2:] + way_or
-        self.create_path(way1)
-        self.clean_path(way1)
-        self.create_path(way_p1)
-        self.clean_path(way_p1)
-        self.create_path(way_m1)
-        self.clean_path(way_m1)
+        self.create_path(way_orig)
+        self.clean_path(way_orig)
 
-        way_m2 = way2[0:sdvig2]+f"{n}"+way2[sdvig2:] + way_map
-        way_p2 = way2[0:sdvig2]+f"{n}"+way2[sdvig2:] + way_par
-        way2 = way2[0:sdvig2]+f"{n}"+way2[sdvig2:] + way_or
-        self.create_path(way2)
-        self.clean_path(way2)
-        self.create_path(way_p2)
-        self.clean_path(way_p2)
-        self.create_path(way_m2)
-        self.clean_path(way_m2)
+        self.create_path(way_par)
+        self.clean_path(way_par)
+        
+        self.create_path(way_map + 'png')
+        self.clean_path(way_map + 'png')
+        
+        self.create_path(way_map + 'pdf')
+        self.clean_path(way_map + 'pdf')
+        
+        self.create_path(way_map + 'svg')
+        self.clean_path(way_map + 'svg')
 
-        way_m3 = way3[0:sdvig2]+f"{n}"+way3[sdvig2:] + way_map
-        way_p3 = way3[0:sdvig2]+f"{n}"+way3[sdvig2:] + way_par
-        way3 = way3[0:sdvig2]+f"{n}"+way3[sdvig2:] + way_or
-        self.create_path(way3)
-        self.clean_path(way3)
-        self.create_path(way_p3)
-        self.clean_path(way_p3)
-        self.create_path(way_m3)
-        self.clean_path(way_m3)
-
-        way_m4 = way4[0:sdvig2]+f"{n}"+way4[sdvig2:] + way_map
-        way_p4 = way4[0:sdvig2]+f"{n}"+way4[sdvig2:] + way_par
-        way4 = way4[0:sdvig2]+f"{n}"+way4[sdvig2:] + way_or
-        self.create_path(way4)
-        self.clean_path(way4)
-        self.create_path(way_p4)
-        self.clean_path(way_p4)
-        self.create_path(way_m4)
-        self.clean_path(way_m4)
-
-        for i in range(rang):
+        for i in range(len(arr)):
             key = self.check_lams(arr[i],i)
-            way_n = self.new_way(way, key)   
-
-            way_m = way_n[0:sdvig2]+f"{n}" + way_n[sdvig2:] + way_map
-            way_p = way_n[0:sdvig2]+f"{n}" + way_n[sdvig2:] + way_par
-            way_k = way_n[0:sdvig2]+f"{n}" + way_n[sdvig2:] + way_or
             
-       
+            way_p = way_all + 'order_params\\'
+            way_k = way_all + 'origin\\'
+                 
             tmp = self.rec_dinamic(par = arr[i],way = way_k,z=i+1)
             self.rec_dinamic_par(way = way_p,z=i+1, arr = tmp.y, t = tmp.t)
-            # self.rec_dinamic_map(way=way_m, z=i+1, params=arr[i], res=res[i])
-    
+
     
     def sost_in_fi(self, key = 'all'):
         n = self.N
@@ -495,32 +479,34 @@ class Original_sist(object):
         self.show_sost(arr = res_fi, key=key, res =res)
         ors.all_new_lam(key)
         tmp_count = 0
-        start_phi = 1
+        start_phi = START_PHI
 
         way = way + "map\\"
         
-        for x in res:
-            phi1 = self.up_arr(start_phi,x,self.N,self.N)
-            alpha = x[2]
-            beta = x[3]
-            k1 = x[4]
-            k2 = x[5]
-            t_amx = 10000
-            
-            # phi1 = [2.474646, 2.474646, 2.474646, 0, 0]
-            # alpha = 0
-            
-                
-            # print(phi1)
-            print(str(tmp_count+1)+":")
-            self.plot_warm_map([phi1,eps,alpha,beta,k1,k2,t_amx], way,tmp_count)
-            tmp_count+=1
-        # ress = self.order_parameter(res_fi)
-        # self.show_sost(arr = ress, key=key)
+        if HOT:
+            joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.__work_hot_plot__)(x,res,start_phi,way) for x in res)
 
-    # просто рисовалка) 
-    # def PlotOnPlane(self, arr):
-    #     plt.plot()
+    
+    def __work_hot_plot__(self,x,res,start_phi,way,dop_title = ''): 
+        phi1 = self.up_arr(start_phi,x,self.N,self.N)
+        alpha = x[2]
+        beta = x[3]
+        k1 = x[4]
+        k2 = x[5]
+        t_amx = 10000
+
+        tmp_count = res.index(x)
+        if dop_title != '':
+            if tmp_count  == 0:
+                dop_title += 'koleb'
+            if tmp_count  == 1:
+                dop_title += 'one'
+            if tmp_count  == 2:
+                dop_title += 'two'
+        
+        self.plot_warm_map([phi1,eps,alpha,beta,k1,k2,t_amx], way,tmp_count, dop_title)
+
+        
     def anti_zamena(self, arr):
         ress = []
         fi1 = self.fi1
@@ -597,14 +583,14 @@ class Original_sist(object):
 
     def order_parameter(self, arr):
         res = []
-        for i in range(Max_time):
+        for i in range(len(arr[0])):
             sumr = 0
             sumi = 0                
             for j in range(2):
                 tmp = np.exp(arr[:,i][j]*1j)
                 sumr += tmp.real
                 sumi += tmp.imag
-                sum = 1/3 * np.sqrt(sumr ** 2 + sumi ** 2)
+                sum = 1/2 * np.sqrt(sumr ** 2 + sumi ** 2)
             res.append(sum)
         return res
     
@@ -645,13 +631,11 @@ class Original_sist(object):
         return res.y
 
     def up_arr(self,start_phi,arr,N,num_elems):
-        res = np.array([])
+        res = np.array ([])
         tmp = np.zeros(num_elems//N)
-        
+       
         if N>num_elems:
             num_elems = N
-        
-        
         
         razb = [arr[1],N-arr[1]]
         
@@ -684,14 +668,13 @@ class Original_sist(object):
         
         return res
 
-    def plot_warm_map(self, param, way, count):
+    def plot_warm_map(self, param, way, count,dop_title = ''):
     
         phi,eps,alpha,beta,k1,k2,t_max = param
         
         v = np.zeros(len(phi))
-        v = v + 1e-1
-        if count==18:
-            print(1)
+        v = v + 1e-3
+
         w = 1
         t = np.linspace(0,t_max,t_max)
         a = self.din_thr_map(phi,v,[alpha,beta,k1,k2,w],t,t_max)
@@ -712,23 +695,54 @@ class Original_sist(object):
         # matrix[5:10] = 1e-10
         # matrix[12] = 1e10
         matrix+=eps
+        pdf = PdfPages(way +'pdf\\'+ f'graph_{count+1}.pdf')
         
         matrix = np.angle(np.exp(1j*matrix))
+        print(str(count+1)+":")
         print(matrix)
-        plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect=4)
-
-        plt.savefig(way + f'graph_{count+1}.png')
+        # plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)*10], aspect=4)
+        fig, ax = plt.subplots()
+        p = ax.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
+        fig.colorbar(p,label=r'$\varphi_1 - \varphi_i$')
+        
+        # phi,eps,alpha,beta,k1,k2,t_max = param
+        # title = 
+        
+        plt.title(r"$\phi_1$ = " + f"{phi[0]},$\phi_2$ = " + f"{round(phi[-1],3)}, N = {self.N}, " + r"$\alpha$ = " + f"{round(alpha,3)}, " + r"$\beta$ = " + f"{round(beta,3)}" + dop_title)
+        plt.xlabel("t")
+        plt.ylabel("N")
+        pdf.savefig()
+        plt.savefig(way+'png\\' + f'graph_{count+1}.png')
+        plt.savefig(way+'svg\\' + f'graph_{count+1}.svg')
+        plt.close(fig)
         plt.clf()
 
 
     #тепловая карта---------------------------------------------------------------------------------------------------
 
+START_PHI=1
+N_JOB = 8
+HOT = 1
+
+
+col_razb = 10
+MAX_GRAPH = 50
+eps = 0.1
+eps_map = 0#1e-1
+Max_time = 100
+
 
 if __name__ == "__main__":
-    tmp = [6, 1, 0]
+    start = time.time()
+
+    tmp = razb_config()
     ors = Original_sist(p = tmp, fi = 1)
-    # ors.dinamic(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
-    ors.sost_in_fi(key='un_st') #"st","un_st","rz","all"
+    # ors.dinamic_klast(params=[[6.283185, 1.427449, 2, 1, 1.0471975511965976]])
+    ors.sost_in_fi(key='st') #"st","un_st","rz","all"
+    
+    end = time.time()
+    print("The time of execution of above program is :",
+        (end-start) * 10**3, "ms")
     
       
     # tmp = ['st','un_st','rz']
