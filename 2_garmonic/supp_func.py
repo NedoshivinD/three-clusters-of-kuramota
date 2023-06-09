@@ -97,6 +97,11 @@ def get_good_arr(arr):
                 good_arr.append(elem)
     return good_arr
 
+def mod(val,module):
+    tmp = val
+    while tmp>module:
+        tmp-=module
+    return tmp
 
 if __name__ == "__main__":
     # arr1 = [[1,2,3],[2,3,4],[3,4,5],[4,5,6]]
@@ -125,6 +130,9 @@ if __name__ == "__main__":
         print("not in array")
     else:
         print(arr[ind])
+
+    # val = 1232123.124214
+    # print(mod(val,np.pi))
 
     
 

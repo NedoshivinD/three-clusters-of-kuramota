@@ -92,9 +92,12 @@ class Tongue(Reduc,Orig):
         return sol.x
     
     def __bliz_sost__(self,s1,s2):
-        return np.abs(s1[0]-s2[0])<ogr_sost
-        
+        module = mod(np.abs(s1[0]),2*np.pi)
+        module -= np.pi
 
+        # np.abs(s1[0]-s2[0]),2*np.pi
+        return np.abs(module-s2[0]),2*np.pi<ogr_sost
+        
     def tmp(self):
         # start_point = [0.866757,0]
         # self.M, self.alpha,self.beta,self.k1,self.k2 = self.param[1:]
@@ -191,23 +194,25 @@ class Tongue(Reduc,Orig):
     def line_analyse(self,start_sost):
         res = []
         self.alpha,self.beta = start_sost[0:2]
-        sost = self.start_sost
+        sost = [start_sost[3],0]
         while self.alpha>0:
             self.alpha -= h_alpha
             new_sost = self.__find_sost_ravn__(sost)
             if not self.__bliz_sost__(new_sost,sost):
+                print(new_sost,sost)
                 break
                 res.append([self.alpha,self.beta,'False'])
             sost = new_sost
             # print([sost,self.alpha,self.beta])
             res.append([self.alpha,self.beta,self.point_analyse(sost),sost[0]])
         
-        sost = self.start_sost
+        sost = [start_sost[3],0]
         self.alpha = self.param[2]
         while self.alpha<np.pi:
             self.alpha += h_alpha
             new_sost = self.__find_sost_ravn__(sost)
             if not self.__bliz_sost__(new_sost,sost):
+                print(new_sost,sost)
                 break
                 res.append([self.alpha,self.beta,'False'])
             sost = new_sost
@@ -246,7 +251,6 @@ class Tongue(Reduc,Orig):
 
         return vert_sost
     
-
     def all_analyse(self):
         vert_points = self.__find_vert_sost__()
 
@@ -292,7 +296,6 @@ class Tongue(Reduc,Orig):
 
         return res
 
-    
     def save_all_analyse(self,arr,save = False):
         if save:
             way= f"2_garmonic\\res\\n_{self.N}\\tmp\\{self.orig_way}\\"
@@ -338,17 +341,17 @@ class Tongue(Reduc,Orig):
         
         if ALL == 1:
             s = 10
-            if len(unst_st)!=0:
-                plt.scatter(unst_st[0],unst_st[1],c='y',alpha=ALPHA,label = 'unst_st',s=s)
-            
             if len(st_st)!=0:
                 plt.scatter(st_st[0],st_st[1],c='b',label = 'st_st',s=s,alpha = ALPHA)
+            
+            if len(st_unst)!=0:
+                plt.scatter(st_unst[0],st_unst[1],c='r',alpha=ALPHA,label = 'st_unst',s = s)
             
             if len(unst_unst)!=0:
                 plt.scatter(unst_unst[0],unst_unst[1],c='g',alpha=ALPHA,label = 'unst_unst',s=s) 
             
-            if len(st_unst)!=0:
-                plt.scatter(st_unst[0],st_unst[1],c='r',alpha=ALPHA,label = 'st_unst',s = s)
+            if len(unst_st)!=0:
+                plt.scatter(unst_st[0],unst_st[1],c='y',alpha=ALPHA,label = 'unst_st',s=s)
             
             plt.title(f"N = {self.N}, M = {self.M}")
             plt.xlabel(r"$\alpha$")
@@ -398,7 +401,6 @@ class Tongue(Reduc,Orig):
                 plt.show()
                 st_st = st_st.T
                 heat_map([st_st[0][2],self.M,st_st[0][0],st_st[0][1],self.k1,self.k2])
-
 
     def show_graph(self, arr, time):
         plt.scatter(time, arr,s=5)
@@ -511,38 +513,6 @@ def all_():
 # =====ALL=========================================
 
 
-# ====FIND KOLEB==========================================
-def find_koleb():
-    tmp = razb_config()
-    par = PAR
-    tong = Tongue(tmp,par)
-
-    sost = SOST
-
-    all_par = []
-    with open(f"2_garmonic\\res\\n_{tmp[0]}\\"+sost+f"{tmp[0]}.txt") as file:
-            for line in file:
-                all_par.append(tong.razb_str(line.rstrip()))
-    
-    ind_koleb = []
-    ind_one = []
-    ind_two = []
-    for i in range(len(all_par)):
-        tong.change_self(all_par[i])
-        verd = tong.point_analyse(all_par[i],0)
-        if verd=='koleb':
-            ind_koleb.append(i)
-        if verd=='one':
-            ind_one.append(i)
-        if verd=='two':
-            ind_two.append(i)
-        print(i+1,": ",verd)
-        
-    print('indexs koleb: ',np.array(ind_koleb) + 1)
-    print('indexs one klust: ',np.array(ind_one ) + 1)
-    print('indexs two klust: ',np.array(ind_two) + 1)
-# ====FIND KOLEB==========================================
-
 # ==== TMP ==========================================
 def tmp(params):
     tmp = razb_config()
@@ -552,7 +522,7 @@ def tmp(params):
     tong = Tongue(tmp,par)
 
     print(tong.point_analyse(par,1))
-    heat_map(par)
+    heat_map(par,0)
     
 # ==== TPM ==========================================
 
@@ -582,30 +552,13 @@ def analyse_sost():
 
 # ==== ANALYSE SOST ==========================================
 
-# stable
-# [1.392219, 4, 1.0472, 3.14159, 1, 1]
-# [0.678476, 6, 1.0472, 2.0944, 1, 1]
-# [2.857196, 7, 2.0944, 0.0, 1, 1]
-# stable
-
-#rz 
-#[0.00101, 5, 3.14159, 1.0472, 1, 1]
-#rz
-
-#[0.756906, 1, 1.0472, 1.0472, 1, 1]
-
-
-# отчет
-# [1.594466, 4, 1.0472, 2.0944, 1, 1]
-# [0.756906, 1, 1.0472, 1.0472, 1, 1]
-# отчет
 
 PAR = [1.609267, 2, 0.0, 2.0944, 1, 1]#[1.047198, 1, 0.0, 3.14159, 1, 1]
 SOST = 'stable_'
 # [0.45000000000000023, 2.044400000000001, 2.119934357071167]
 # [0.45000000000000023, 0.7944000000000007, 1.4431829695150693]
 # [0.16, 2.1543999999999985, 1.6751802893528247]
-ogr_sost = 0.05 # <- подобрать
+ogr_sost = 0.05# <- подобрать
 h_alpha = 0.01
 h_beta = 0.01
 
@@ -631,15 +584,16 @@ if __name__ == "__main__":
     start = time.time()
 
 
-    all_()
+    # all_()
 
     # points = [[0.358, 1.966],[0.1, 1.997],[0.381, 2.63],[1.7, 2.5],[1, 1.476],[1.15, 0.886]]
     # points = [[0.09, 2.233],[0.09, 1.947],[0.94, 1.705],[0.751, 1.885],[0.381, 1.935]]
-    # points = [[0.733, 1.867]]
-    # sost = get_point_sost(points)
-    # print(sost)
-    # for point in sost:
-    #     tmp([point[3],PAR[1],point[0],point[1],PAR[4],PAR[5]])
+    points = [[0.09, 2]]
+
+    sost = get_point_sost(points)
+    print(sost)
+    for point in sost:
+        tmp([point[3],PAR[1],point[0],point[1],PAR[4],PAR[5]])
         
     # analyse_sost()
     
@@ -648,15 +602,3 @@ if __name__ == "__main__":
     print("The time of execution of above program is :",
         (end-start) * 10**3, "ms")
     
-
-    
-    
-    # all_par = []
-    # with open("2_garmonic\\res\\n_6\\non_stable_6.txt") as file:
-    #         for line in file:
-    #             all_par.append(tong.razb_str(line.rstrip()))
-    
-    # for i in range(len(all_par)):
-    #     print(i+1,": ",tong.ord_par_tong(all_par[i]))
-    
-    # print(tong.ord_par_tong(par))

@@ -8,7 +8,7 @@ import random
 
 
 
-n_job = 4
+
 
 def iter_din(t, start_point , par):
     
@@ -41,7 +41,7 @@ def din_thr_map(phi,v,par,t,t_max):
         start_point[i] = phi[i]
         start_point[i+len(phi)] = v[i]
 
-    res = solve_ivp(iter_din,[0,t_max],start_point, args=[par],rtol= 10e-10,atol=10e-10) # t_eval=t,
+    res = solve_ivp(iter_din,[0,t_max],start_point,t_eval=t, args=[par])#,rtol= 10e-10,atol=10e-10) # 
     
     return res.y
 
@@ -85,7 +85,7 @@ def up_arr(start_phi,arr,N,num_elems,eps):
     
     return res
     
-def work(param):
+def work(param,show):
     
     phi,eps,alpha,beta,k1,k2,t_max = param
     
@@ -93,7 +93,7 @@ def work(param):
     v = v + 1e-1
     
     w = 1
-    t = np.linspace(0,t_max,t_max)
+    t = np.linspace(0,t_max,1000)
     a = din_thr_map(phi,v,[alpha,beta,k1,k2,w],t,t_max)
     
     matrix = np.array([])
@@ -104,33 +104,26 @@ def work(param):
 
     l = len(phi) - 1
     while l>=0:
-        # if l != 19:
         matrix[l] = matrix[l] - matrix[0]
         l-=1
 
-    
-    # matrix[5:10] = 1e-10
-    # matrix[12] = 1e10
     matrix+=eps
     
     matrix = np.angle(np.exp(1j*matrix))
     print(matrix)
-    # plt.yticks(yticks,size=7)
-    # plt.figure(figsize=(cm_to_inch(40),cm_to_inch(60)))
-    # plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*100,0,len(phi)*10], aspect=4)
     fig, ax = plt.subplots()
-    # matrix = np.angle(np.exp(1j*matrix))
-    # print(matrix)
-    p = ax.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
-    fig.colorbar(p,label=r'$\varphi_1 - \varphi_i$')
-    plt.xlabel("t")
-    plt.ylabel("N")
-    plt.show()
+
+    if show == 1:
+        p = ax.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
+        fig.colorbar(p,label=r'$\varphi_1 - \varphi_i$')
+        plt.xlabel("t")
+        plt.ylabel("N")
+        plt.show()
+    return analyse_matrix(matrix)
     
     
-    # plt.savefig('tmp.svg')
     
-def heat_map(par):
+def heat_map(par,show=1):
     tmp = razb_config()
     eps = 1e-5
     low_arr = par
@@ -142,17 +135,47 @@ def heat_map(par):
     k1 = low_arr[4]
     k2 = low_arr[5]
     
-    t_amx = 10000
+    t_amx = 100
     
-    work([phi1,eps,alpha,beta,k1,k2,t_amx])
+    return work([phi1,eps,alpha,beta,k1,k2,t_amx],show)
+
+def analyse_matrix(matrix):
+    maxima = matrix[0][0]
+    minima = matrix[0][0]
+    f_min = False
+    f_max = False
+    for line in matrix:
+        for elem in line:
+            if maxima < elem:
+                maxima = elem
+                if np.abs(maxima) > 3:
+                    f_max = True
+            if minima > elem:
+                minima = elem
+                if np.abs(minima) > 3:
+                    f_min = True
+            if f_min and f_max:
+                return "vrash"
+            
+    return "default"
     
+    
+    
+    
+
+
+            
+n_job = 8
+eps_analyse_map = 1e-5
+
 if __name__ == "__main__":
     
 
     tmp = razb_config()
     eps = 1e-5
 
-    low_arr = [1.609267, 2, 0.0, 2.0944, 1, 1]
+    # low_arr = [87.96459430051421, 2, 1.1500000000000008, 1.8444000000000016, 1, 1]
+    low_arr = [ 1.6696164961860338, 2, 0.04, 2.044400000000001, 1, 1]
     
     start_phi = 1
     eps = 1e-1
@@ -161,16 +184,9 @@ if __name__ == "__main__":
     beta = low_arr[3]
     k1 = low_arr[4]
     k2 = low_arr[5]
-    t_amx = 10000
+    t_amx = 100
 
     work([phi1,eps,alpha,beta,k1,k2,t_amx])
-
-    # param = [1.959579, 2, 2.0944, 3.14159, 1, 1]
-    # way= f"2_garmonic\\res\\n_{tmp[0]}\\tmp\\{param}\\"
-    # arr = [1,2,3]
-    # with open(way+'text.txt','w') as f:
-    #     f.writelines(str(arr))
-    # print(arr)
     
     
     
