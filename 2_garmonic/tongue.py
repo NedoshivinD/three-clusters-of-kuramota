@@ -127,57 +127,61 @@ class Tongue(Reduc,Orig):
         # print(start_point,self.alpha,self.beta,verdict)
         return verdict
      
-    def point_analyse(self,sost,show=0,t=0):
+    def point_analyse(self,sost,show=0,t=0,):
+        krit = KRIT
         par = [sost[0],self.M,self.alpha,self.beta,self.k1,self.k2]
-        lam = self.eigenvalues(par)
-        start_point  = self.up_arr(1,par,self.N,self.N)
-        for i in range(len(start_point)):
-            start_point = np.append(start_point,0)
-        lam_full = self.eigenvalues_full(start_point)
-        lam_klast = []
+        if krit == "lam":
+            lam = self.eigenvalues(par)
+            start_point  = self.up_arr(1,par,self.N,self.N)
+            for i in range(len(start_point)):
+                start_point = np.append(start_point,0)
+            lam_full = self.eigenvalues_full(start_point)
+            lam_klast = []
 
-        enum = 0
-        for lf in lam_full:
-            if enum<2:
-                if np.abs(lf - lam[enum]) < 0.1:
-                    enum+=1
+            enum = 0
+            for lf in lam_full:
+                if enum<2:
+                    if np.abs(lf - lam[enum]) < 0.1:
+                        enum+=1
+                        continue
+                
+                if np.abs(lf)<1e-7:
                     continue
-            
-            if np.abs(lf)<1e-7:
-                continue
-            lam_klast.append(lf)
+                lam_klast.append(lf)
 
-        res = ''
-        # между кластерами
-        f = True
-        for l in lam:
-            if l.real>EPS_REAL:
-                f = False
-                break
-        if f:
-            res+='st_'
-        else:
-            res+='unst_'
-        # между кластерами
-            
-        # кластер
-        f = True    
-        for l in lam_klast:
-            if l.real>0:
-                f = False
-                break
-        if f:
-            res+='st'
-        else:
-            res+='unst'
-        # кластер
+            res = ''
+            # между кластерами
+            f = True
+            for l in lam:
+                if l.real>EPS_REAL:
+                    f = False
+                    break
+            if f:
+                res+='st_'
+            else:
+                res+='unst_'
+            # между кластерами
+                
+            # кластер
+            f = True    
+            for l in lam_klast:
+                if l.real>0:
+                    f = False
+                    break
+            if f:
+                res+='st'
+            else:
+                res+='unst'
+            # кластер
 
-        if show == 1:
-            print(lam)
-            print(lam_klast)
-            print(lam_full)
+            if show == 1:
+                print(lam)
+                print(lam_klast)
+                print(lam_full)
 
-        return res
+            return res
+        elif krit=="din":
+            return heat_map(par,0)
     
     def get_max_eig(self,sost):
         par = [sost[0],self.M,self.alpha,self.beta,self.k1,self.k2]
@@ -312,7 +316,11 @@ class Tongue(Reduc,Orig):
         unst_unst = []
         st_unst = []
         unst_st = []
-
+        
+        default = []
+        vrash = []
+        two = []
+        two_2 = []
         
         # arr = np.array(arr)
         for a in arr:
@@ -327,6 +335,14 @@ class Tongue(Reduc,Orig):
                     st_unst.append([float(t_[0]),float(t_[1]),float(t_[3])])
                 elif t_[2] == 'unst_st':
                     unst_st.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'default':
+                    default.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'vrash':
+                    vrash.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'two':
+                    two.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'two_2':
+                    two_2.append([float(t_[0]),float(t_[1]),float(t_[3])])
         st_st = np.array(st_st)
         st_st = st_st.T
 
@@ -339,6 +355,18 @@ class Tongue(Reduc,Orig):
         unst_st = np.array(unst_st)
         unst_st = unst_st.T
         
+        default = np.array(default)
+        default = default.T
+            
+        vrash = np.array(vrash)
+        vrash = vrash.T
+        
+        two = np.array(two)
+        two = two.T
+        
+        two_2 = np.array(two_2)
+        two_2 = two_2.T
+            
         if ALL == 1:
             s = 10
             if len(st_st)!=0:
@@ -352,6 +380,20 @@ class Tongue(Reduc,Orig):
             
             if len(unst_st)!=0:
                 plt.scatter(unst_st[0],unst_st[1],c='y',alpha=ALPHA,label = 'unst_st',s=s)
+            
+            # -----------
+
+            if len(default)!=0:
+                plt.scatter(default[0],default[1],c='r',label = 'default',s=s,alpha = ALPHA)
+            
+            if len(vrash)!=0:
+                plt.scatter(vrash[0],vrash[1],c='g',alpha=ALPHA,label = 'vrash',s = s)
+            
+            if len(two_2)!=0:
+                plt.scatter(two_2[0],two_2[1],c='y',alpha=ALPHA,label = 'two_2',s = s)
+            
+            if len(two)!=0:
+                plt.scatter(two[0],two[1],c='b',alpha=ALPHA,label = 'two',s = s)
             
             plt.title(f"N = {self.N}, M = {self.M}")
             plt.xlabel(r"$\alpha$")
@@ -425,6 +467,7 @@ Max_time = 100
 count_gran = 10
 eps = 1e-7
 
+KRIT = "din" #"din" or "lam"
 
 
 # =======LINE=======================================
@@ -522,7 +565,7 @@ def tmp(params):
     tong = Tongue(tmp,par)
 
     print(tong.point_analyse(par,1))
-    heat_map(par,0)
+    heat_map(par)
     
 # ==== TPM ==========================================
 
@@ -553,7 +596,7 @@ def analyse_sost():
 # ==== ANALYSE SOST ==========================================
 
 
-PAR = [1.609267, 2, 0.0, 2.0944, 1, 1]#[1.047198, 1, 0.0, 3.14159, 1, 1]
+PAR = [1.839451, 4, 1.0472, 2.0944, 1, 1]#[1.047198, 1, 0.0, 3.14159, 1, 1]
 SOST = 'stable_'
 # [0.45000000000000023, 2.044400000000001, 2.119934357071167]
 # [0.45000000000000023, 0.7944000000000007, 1.4431829695150693]
@@ -584,16 +627,16 @@ if __name__ == "__main__":
     start = time.time()
 
 
-    # all_()
+    all_()
 
     # points = [[0.358, 1.966],[0.1, 1.997],[0.381, 2.63],[1.7, 2.5],[1, 1.476],[1.15, 0.886]]
     # points = [[0.09, 2.233],[0.09, 1.947],[0.94, 1.705],[0.751, 1.885],[0.381, 1.935]]
-    points = [[0.09, 2]]
+    # points = [[0.09, 2]]
 
-    sost = get_point_sost(points)
-    print(sost)
-    for point in sost:
-        tmp([point[3],PAR[1],point[0],point[1],PAR[4],PAR[5]])
+    # sost = get_point_sost(points)
+    # print(sost)
+    # for point in sost:
+    #     tmp([point[3],PAR[1],point[0],point[1],PAR[4],PAR[5]])
         
     # analyse_sost()
     

@@ -85,7 +85,7 @@ def up_arr(start_phi,arr,N,num_elems,eps):
     
     return res
     
-def work(param,show):
+def work(param,M,show):
     
     phi,eps,alpha,beta,k1,k2,t_max = param
     
@@ -110,16 +110,17 @@ def work(param,show):
     matrix+=eps
     
     matrix = np.angle(np.exp(1j*matrix))
-    print(matrix)
-    fig, ax = plt.subplots()
+    # print(matrix)
 
     if show == 1:
+        fig, ax = plt.subplots()
+        
         p = ax.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
         fig.colorbar(p,label=r'$\varphi_1 - \varphi_i$')
         plt.xlabel("t")
         plt.ylabel("N")
         plt.show()
-    return analyse_matrix(matrix)
+    return analyse_matrix(matrix,M)
     
     
     
@@ -137,14 +138,14 @@ def heat_map(par,show=1):
     
     t_amx = 100
     
-    return work([phi1,eps,alpha,beta,k1,k2,t_amx],show)
+    return work([phi1,eps,alpha,beta,k1,k2,t_amx],low_arr[1],show)
 
-def analyse_matrix(matrix):
+def analyse_matrix(matrix,M):
     maxima = matrix[0][0]
     minima = matrix[0][0]
     f_min = False
     f_max = False
-    for line in matrix:
+    for line in matrix[-10:]:
         for elem in line:
             if maxima < elem:
                 maxima = elem
@@ -156,6 +157,26 @@ def analyse_matrix(matrix):
                     f_min = True
             if f_min and f_max:
                 return "vrash"
+
+    ind = 0
+    num_klust = []
+    while ind < len(matrix):
+        tmp_razn = matrix[0][-1] - matrix[ind][-1]
+        f = True
+        for i,elem in enumerate(num_klust):
+            if np.abs(tmp_razn - elem[0]) < 1e-2:
+                num_klust[i][1]+=1
+                f = False
+                break
+        if f:
+            num_klust.append([tmp_razn,1])
+        ind+=1
+
+    if len(num_klust)==2:
+        if  num_klust[0][1]==M:
+            return "two"
+        else :
+            return "two_2"
             
     return "default"
     
@@ -174,8 +195,8 @@ if __name__ == "__main__":
     tmp = razb_config()
     eps = 1e-5
 
-    # low_arr = [87.96459430051421, 2, 1.1500000000000008, 1.8444000000000016, 1, 1]
-    low_arr = [ 1.6696164961860338, 2, 0.04, 2.044400000000001, 1, 1]
+    low_arr = [87.96459430051421, 2, 1.1500000000000008, 1.8444000000000016, 1, 1]
+    # low_arr = [ 1.6696164961860338, 2, 0.04, 2.044400000000001, 1, 1]
     
     start_phi = 1
     eps = 1e-1
@@ -186,7 +207,7 @@ if __name__ == "__main__":
     k2 = low_arr[5]
     t_amx = 100
 
-    work([phi1,eps,alpha,beta,k1,k2,t_amx])
+    print(work([phi1,eps,alpha,beta,k1,k2,t_amx],low_arr[1],1))
     
     
     
