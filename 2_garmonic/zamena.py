@@ -195,11 +195,11 @@ class Equilibrium_states(object):
     #динамика для одной точки
     def dinamic(self,params = [2.094395, 1,  2.0943951023931953, 2.0943951023931953]):
         start_point=np.zeros(2)
-        start_point[0], self.M, self.alpha, self.beta = params 
-        start_point[0] = start_point[0]+eps
-        
-        tmp = integrate.odeint(self.syst, start_point, self.t)
-        plt.plot(self.t,tmp[:,0],label="x")
+        start_point[0],self.M,self.alpha,self.beta,self.k1,self.k2 = params 
+        start_point[0] += eps
+        tmp = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1)
+
+        plt.plot(tmp.t,tmp.y[0],label="x")
         plt.xlim(0, 100)
         plt.ylim(-np.pi, np.pi)
         plt.legend()

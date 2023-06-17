@@ -181,7 +181,7 @@ class Tongue(Reduc,Orig):
 
             return res
         elif krit=="din":
-            return heat_map(par,0)
+            return heat_map(par,show)
     
     def get_max_eig(self,sost):
         par = [sost[0],self.M,self.alpha,self.beta,self.k1,self.k2]
@@ -319,9 +319,13 @@ class Tongue(Reduc,Orig):
         
         default = []
         vrash = []
+        one = []
         two = []
         two_2 = []
-        
+        two_ne_ust = []
+        koleb = []
+        three = []
+
         # arr = np.array(arr)
         for a in arr:
             # tmp = np.array(a)
@@ -343,6 +347,14 @@ class Tongue(Reduc,Orig):
                     two.append([float(t_[0]),float(t_[1]),float(t_[3])])
                 elif t_[2] == 'two_2':
                     two_2.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'one':
+                    one.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'two_ne_ust':
+                    two_2.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'koleb':
+                    koleb.append([float(t_[0]),float(t_[1]),float(t_[3])])
+                elif t_[2] == 'three':
+                    three.append([float(t_[0]),float(t_[1]),float(t_[3])])
         st_st = np.array(st_st)
         st_st = st_st.T
 
@@ -367,6 +379,18 @@ class Tongue(Reduc,Orig):
         two_2 = np.array(two_2)
         two_2 = two_2.T
             
+        one = np.array(one)
+        one = one.T
+        
+        two_ne_ust = np.array(two_ne_ust)
+        two_ne_ust = two_ne_ust.T
+
+        koleb = np.array(koleb)
+        koleb = koleb.T
+            
+        three = np.array(three)
+        three = three.T
+
         if ALL == 1:
             s = 10
             if len(st_st)!=0:
@@ -395,10 +419,23 @@ class Tongue(Reduc,Orig):
             if len(two)!=0:
                 plt.scatter(two[0],two[1],c='b',alpha=ALPHA,label = 'two',s = s)
             
+            if len(one)!=0:
+                plt.scatter(one[0],one[1],c='pink',alpha=ALPHA,label = 'one',s = s)
+            
+            if len(two_ne_ust)!=0:
+                plt.scatter(two_ne_ust[0],two_ne_ust[1],c='cyan',alpha=ALPHA,label = 'two_ne_ust',s = s)
+            
+            if len(koleb)!=0:
+                plt.scatter(koleb[0],koleb[1],c='m',alpha=ALPHA,label = 'koleb',s = s)
+            
+            if len(three)!=0:
+                plt.scatter(three[0],three[1],c='sienna',alpha=ALPHA,label = 'three',s = s)
+            
+
             plt.title(f"N = {self.N}, M = {self.M}")
             plt.xlabel(r"$\alpha$")
             plt.ylabel(r"$\beta$")
-            plt.legend()
+            # plt.legend()
             if ON_LIM:
                 plt.xlim(-0.1,np.pi+0.2)
                 plt.ylim(-0.1,np.pi+0.2)
@@ -489,6 +526,7 @@ def all_():
     par = PAR#[2.892549, 2, 1.0472, 2.0944, 1, 1]
     tong = Tongue(tmp,par)
 
+    # while True:
     reshenie = input("1: построение сначала, 2: построение по text\n")
     if reshenie == '1':    
         tmp1 = tong.all_analyse()
@@ -502,51 +540,13 @@ def all_():
     else:
         exit()
     
-    while True:
-        if reshenie == 'es':
-            tong.save_all_analyse([good_arr],True)
-            exit()
-        if reshenie == 'exit':
-            exit()
-    # arr = razb_text(WAY)
-        point = input("input point:\n").split()
-        if len(point)!=2:
-            break
-        for i,p in enumerate(point):
-            point[i]= float(p)
-        ind = get_ind_text(good_arr,point)
-        if ind==None:
-            print("not in array")
-            continue
-        else:
-            print(good_arr[ind])
-        
-        par[0] = good_arr[ind][3]
-        par[2] = good_arr[ind][0]
-        par[3] = good_arr[ind][1]
-
-        tong.change_self(par)
-        tmp2 = tong.all_analyse()
-        good_arr_tmp2 = get_good_arr(tmp2)
-        good_arr_tmp = add_unic_good_arr(good_arr,good_arr_tmp2)
-        print(tong.save_all_analyse([good_arr_tmp]))
-        
-        reshenie = input("1: contionue, o: otkat, oe: otkat, save_graph and exit, e: save_graph and exit, exit: just exit\n")
-        if reshenie == '1':
-            good_arr = good_arr_tmp
-            continue
-        elif reshenie == 'o':
-            tong.save_all_analyse([good_arr])
-            continue
-        elif reshenie == 'oe':
-            tong.save_all_analyse([good_arr])
-            break
-        elif reshenie == 'e':
-            tong.save_all_analyse([good_arr_tmp],True)
-            break
-        elif reshenie == 'exit':
-            break
-        
+    # while True:
+    if reshenie == 'es':
+        tong.save_all_analyse([good_arr],True)
+        exit()
+    if reshenie == 'exit':
+        exit()
+    
 
     
     
@@ -565,7 +565,7 @@ def tmp(params):
     tong = Tongue(tmp,par)
 
     print(tong.point_analyse(par,1))
-    heat_map(par)
+    # heat_map(par)
     
 # ==== TPM ==========================================
 
@@ -582,21 +582,50 @@ def get_point_sost(points):
 
 # ==== ANALYSE SOST ==========================================
 
-def analyse_sost():
+def analyse_sost(point):
     tmp = razb_config()
-    
-    way = f"2_garmonic\\res\\n_{tmp[0]}\\tmp\\"+str(PAR)+"\\analyse_sost"
-    par = PAR#[2.892549, 2, 1.0472, 2.0944, 1, 1]
-    par[2] = 2.5#PAR[2]
-    par[3] = 0.5#PAR[3]
+    par = [point[3],PAR[1],point[0],point[1],PAR[4],PAR[5]]
     tong = Tongue(tmp,par)
 
-    tong.dinamic_klast([par])
+    lam_red = tong.eigenvalues(par)
+    start_point  = tong.up_arr(1,par,tmp[0],tmp[0])
+    for i in range(len(start_point)):
+        start_point = np.append(start_point,0)
+    lam_full = tong.eigenvalues_full(start_point)
+    # print(lam_red)
+    # print(lam_full)
+    red = []
+    for l in lam_red:
+        red.append([l.real,l.imag])
+    red = np.array(red)
+
+    full = []
+    for l in lam_full:
+        full.append([l.real,l.imag])
+    full = np.array(full)    
+    
+    plt.scatter(full.T[0],full.T[1],c='b',marker='o')
+    plt.scatter(red.T[0],red.T[1],c='r',marker='x')
+    plt.grid()
+    plt.legend()
+    plt.xlabel(r'Re($\lambda$)')
+    plt.ylabel(r'Im($\lambda$)')
+    plt.show()
+
+
+    # lam_full = tong.eigenvalues_full()
+    tong.dinamic(par)
+    tong.dinamic_klast(par)
+    print(tong.point_analyse(par))
+    heat_map(par)
+    
 
 # ==== ANALYSE SOST ==========================================
 
 
-PAR = [1.839451, 4, 1.0472, 2.0944, 1, 1]#[1.047198, 1, 0.0, 3.14159, 1, 1]
+PAR = [1.609267, 2, 0.0, 2.0944, 1, 1] #10
+# PAR = [1.839451, 4, 1.0472, 2.0944, 1, 1] #11
+# PAR = [1.823477, 5, 2.0944, 3.14159, 1, 1] #10
 SOST = 'stable_'
 # [0.45000000000000023, 2.044400000000001, 2.119934357071167]
 # [0.45000000000000023, 0.7944000000000007, 1.4431829695150693]
@@ -630,16 +659,35 @@ if __name__ == "__main__":
     all_()
 
     # points = [[0.358, 1.966],[0.1, 1.997],[0.381, 2.63],[1.7, 2.5],[1, 1.476],[1.15, 0.886]]
-    # points = [[0.09, 2.233],[0.09, 1.947],[0.94, 1.705],[0.751, 1.885],[0.381, 1.935]]
-    # points = [[0.09, 2]]
+    # points = [[2.2, 2.2],[0.3, 2.7],[0.046,2.1]]
+    points = [[2.81, 1.268 ]]
+    sost = get_point_sost(points)
 
-    # sost = get_point_sost(points)
+    # -------------------- Динамика точек --------------------------------------
     # print(sost)
-    # for point in sost:
-    #     tmp([point[3],PAR[1],point[0],point[1],PAR[4],PAR[5]])
-        
-    # analyse_sost()
-    
+    for point in sost:
+        tmp([point[3],PAR[1],point[0],point[1],PAR[4],PAR[5]])
+
+    # tmp([13.60318971848865,PAR[1],3.099999999999978, 0.004400000000000102,PAR[4],PAR[5]])
+    # -------------------- Динамика точек --------------------------------------
+
+    # -------------------- ориг и редуц и лам --------------------------------------
+    # analyse_sost(sost[0])
+    # -------------------- ориг и редуц и лам --------------------------------------
+
+    # --------------------  линия состояний  --------------------------------------
+    # text  = razb_text(WAY)
+    # line_beta = []
+    # for el in text:
+    #     if el[1] == sost[0][1]:
+    #         el[3] = mod(el[3],np.pi*2)
+    #         line_beta.append([el[0],el[3]])
+    # line_beta = np.array(line_beta)
+    # line_beta = line_beta.T
+    # plt.scatter(line_beta[0],line_beta[1])
+    # plt.show()
+    # --------------------  линия состояний  --------------------------------------
+
 
     end = time.time()
     print("The time of execution of above program is :",

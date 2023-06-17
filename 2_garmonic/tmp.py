@@ -71,14 +71,14 @@ def up_arr(start_phi,arr,N,num_elems,eps):
     
     tmp +=start_phi
     
-    for i in range(razb[0]):
+    for i in range(int(razb[0])):
         res = np.append(res,tmp+random.uniform(-1, 1)*1e-1)
     
     tmp-= start_phi
     
     tmp = tmp+arr[0]
     
-    for i in range(razb[1]):
+    for i in range(int(razb[1])):
         res = np.append(res, start_phi - tmp + random.uniform(-1, 1)*1e-1)
         
     tmp = tmp-arr[0]
@@ -145,26 +145,14 @@ def analyse_matrix(matrix,M):
     minima = matrix[0][0]
     f_min = False
     f_max = False
-    for line in matrix[-10:]:
-        for elem in line:
-            if maxima < elem:
-                maxima = elem
-                if np.abs(maxima) > 3:
-                    f_max = True
-            if minima > elem:
-                minima = elem
-                if np.abs(minima) > 3:
-                    f_min = True
-            if f_min and f_max:
-                return "vrash"
 
     ind = 0
     num_klust = []
     while ind < len(matrix):
-        tmp_razn = matrix[0][-1] - matrix[ind][-1]
+        tmp_razn = matrix[ind][-1]
         f = True
         for i,elem in enumerate(num_klust):
-            if np.abs(tmp_razn - elem[0]) < 1e-2:
+            if np.abs(tmp_razn - elem[0]) < 1e-1:
                 num_klust[i][1]+=1
                 f = False
                 break
@@ -172,12 +160,64 @@ def analyse_matrix(matrix,M):
             num_klust.append([tmp_razn,1])
         ind+=1
 
+    # print(num_klust)
+    
+    
+    if len(num_klust)==1:
+        return "one"
+    
     if len(num_klust)==2:
+        maxima = matrix[0][0]
+        minima = matrix[0][0]
+        for line in matrix:
+            mini_arr = line[int(-len(line)/10):]
+            max_mini_arr = max(mini_arr)
+            min_mini_arr = min(mini_arr)
+            if np.abs(max_mini_arr - min_mini_arr) > 0.5 and np.abs(max_mini_arr - min_mini_arr) < 3:
+                return "koleb" 
+
+        for line in matrix:
+            for elem in line[-int(len(line)/15):]:
+                if maxima < elem:
+                    maxima = elem
+                    if np.abs(maxima) > 3:
+                        f_max = True
+                if minima > elem:
+                    minima = elem
+                    if np.abs(minima) > 3:
+                        f_min = True
+                if f_min and f_max:
+                    return "vrash"
         if  num_klust[0][1]==M:
+            if np.abs(matrix[-1][-1] - matrix[-1][1] ) > 1e-1:
+                return "two_ne_ust"
             return "two"
         else :
             return "two_2"
+    
+    if len(num_klust)==3:
+        maxima = matrix[0][0]
+        minima = matrix[0][0]
+        for line in matrix:
+            mini_arr = line[int(-len(line)/8):]
+            max_mini_arr = max(mini_arr)
+            min_mini_arr = min(mini_arr)
+            if np.abs(max_mini_arr - min_mini_arr) > 0.5 and np.abs(max_mini_arr - min_mini_arr) < 3:
+                return "koleb" 
             
+        for line in matrix:
+            for elem in line[-int(len(line)/15):]:
+                if maxima < elem:
+                    maxima = elem
+                    if np.abs(maxima) > 3:
+                        f_max = True
+                if minima > elem:
+                    minima = elem
+                    if np.abs(minima) > 3:
+                        f_min = True
+                if f_min and f_max:
+                    return "vrash"
+        return "three"
     return "default"
     
     

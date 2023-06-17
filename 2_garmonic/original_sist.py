@@ -273,7 +273,7 @@ class Original_sist(object):
 
     #динамика для одной точки
     def dinamic_klast(self, params = [np.pi, 1, np.pi/3, np.pi/3]):
-        par = self.anti_zamena(arr=params)
+        par = self.anti_zamena(arr=[params])
         par = np.reshape(par, (len(par[0])))
         start_point=np.zeros(4)
         start_point[0],start_point[1], self.M,self.alpha, self.beta,self.k1,self.k2 = par 
@@ -282,8 +282,9 @@ class Original_sist(object):
         start_point[2] = eps
         start_point[3] = eps
         
+        t = np.linspace(0,Max_time,1000)
         # tmp = integrate.odeint(self.syst, start_point, self.t)
-        res = solve_ivp(self.syst_orig, [0,Max_time],start_point)
+        res = solve_ivp(self.syst_orig, [0,Max_time], start_point, t_eval=t)
         plt.plot(res.t,np.sin(res.y[0]),label="sin(fi1)")
         plt.plot(res.t,np.sin(res.y[1]),label="sin(fi2)", linestyle = '--')
         # plt.xlim(0, 100)
