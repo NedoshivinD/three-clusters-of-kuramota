@@ -1,24 +1,22 @@
 import numpy as np
-# from requests import patch
 from scipy import integrate
 import matplotlib.pyplot as plt
 from scipy.optimize import root
 import joblib 
 from numpy import linalg as LA
 import os, shutil, sys
-from sympy import Matrix, pretty
 from scipy.integrate import solve_ivp
-import ast
 from matplotlib.backends.backend_pdf import PdfPages
+import random
 
 
 #Параметры системы 
 
 col_razb = 10
 MAX_GRAPH = 100
-eps = 0
+eps = 1e-3
 eps_map = 1e-3
-Max_time = 100
+Max_time = 500
 
 
 class Original_sist(object):
@@ -317,9 +315,9 @@ class Original_sist(object):
         tmp = solve_ivp(self.syst, [0, Max_time],start_point, t_eval=self.t, trol=1e-11,atol=1e-11)
         # for x in tmp:
         #     x[0] = np.sin()
-        plt.plot(tmp.t,np.sin(tmp.y[0]),label="sin(fi1)")
-        plt.plot(tmp.t,np.sin(tmp.y[1]),label="sin(fi2)", linestyle = '--')
-        plt.plot(tmp.t,np.sin(tmp.y[2]),label="sin(fi3)", linestyle = '-.')
+        plt.plot(tmp.t,tmp.y[0] - tmp.y[1],label="fi1 - fi2")
+        # plt.plot(tmp.t,np.sin(tmp.y[1]),label="sin(fi2)", linestyle = '--')
+        plt.plot(tmp.t,tmp.y[0] -tmp.y[2],label="fi1 - fi3)", linestyle = '-.')
         # plt.plot(tmp.t,tmp.y[0],label="fi1_with_dot")
         # plt.plot(tmp.t,tmp.y[1],label="fi2_with_dot", linestyle = '--')
         # plt.plot(tmp.t,tmp.y[2],label="fi3_with_dot", linestyle = '-.')
@@ -327,8 +325,8 @@ class Original_sist(object):
         # plt.ylim(0, 1)
         plt.xlabel("t")
         plt.ylabel("sin(phi[i])")
-        plt.text(x=Max_time//2,y=1.1, horizontalalignment = 'center', s="phi 1 = " + str(params[0]) + ", phi 2 = " + str(params[1]) + ", phi 3 = " + 
-                str(params[2]) + ", K = " + str(params[3]) + ", M = " + str(params[4]) + ", alpha = " + str(params[5]))
+        # plt.text(x=Max_time//2,y=1.1, horizontalalignment = 'center', s="phi 1 = " + str(params[0]) + ", phi 2 = " + str(params[1]) + ", phi 3 = " + 
+                # str(params[2]) + ", K = " + str(params[3]) + ", M = " + str(params[4]) + ", alpha = " + str(params[5]))
         plt.legend()
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
@@ -339,6 +337,8 @@ class Original_sist(object):
         plt.plot(t, R1)
         # plt.xlim(0, 100)
         plt.ylim(0, 1.1)
+        plt.xlabel('t')
+        plt.ylabel('R1')
         plt.savefig(way + f'graph_{z}.png')
         plt.clf()
 
@@ -542,7 +542,7 @@ class Original_sist(object):
         for x in res:
             phi1 = self.up_arr(start_phi,x,self.N,self.N)
             alpha = x[4]
-            t_amx = 10000
+            t_amx = 100
             
             # phi1 = [2.474646, 2.474646, 2.474646, 0, 0]
             # alpha = 0
@@ -551,7 +551,7 @@ class Original_sist(object):
             # print(phi1)
             print(str(tmp_count+1)+":")
             
-            self.plot_warm_map([phi1,eps,alpha,t_amx], way,tmp_count,pdf)
+            self.plot_warm_map([phi1,eps,alpha,t_amx], way,tmp_count,pdf,'')
             
             tmp_count+=1
         pdf.close()
@@ -662,7 +662,7 @@ class Original_sist(object):
     
     #тепловая карта----------------------------------------------------------------------------------
     def iter_din(self, t, start_point , par):
-    
+        m=self.m
         alpha,w = par
         phi = np.zeros(len(start_point)//2)
         v = np.zeros(len(start_point)//2)
@@ -678,13 +678,13 @@ class Original_sist(object):
         
         for j in range(len(phi)):
             for phi_i in phi:
-                s += np.sin(phi_i - phi[j]  - alpha)
+                s += np.sin(phi_i - phi[j]  + alpha)
             
             # f[j] = round(s/lens + w - v[j], 7)
             # f[j+len(phi)] = round(v[j], 7)
 
             f[j] = v[j]
-            f[j+len(phi)]=s/self.N + w - v[j]
+            f[j+len(phi)]=(s/self.N + w - v[j])/m
 
             s = 0
         # phi[:] = 0
@@ -694,7 +694,7 @@ class Original_sist(object):
     def din_thr_map(self, phi,v,par,t,t_max):
         start_point = np.zeros(len(phi)*2)
         for i in range(len(phi)):
-            start_point[i] = phi[i]
+            start_point[i] = phi[i] + 1e-3
             start_point[i+len(phi)] = v[i]
 
         res = solve_ivp(self.iter_din,[0,t_max],start_point, args=[par],rtol= 10e-10,atol=10e-10) # t_eval=t,
@@ -719,23 +719,23 @@ class Original_sist(object):
         tmp +=start_phi
     
         for i in range(razb[0]):
-            res = np.append(res,tmp+eps_map)
+            res = np.append(res,tmp+random.uniform(-1, 1)*1e-2)
         
         tmp-= start_phi
         
         for i in range(len(razb[1:3])):
             tmp = tmp+arr[i]
             for j in range(razb[i+1]):
-                res = np.append(res, start_phi -tmp)
+                res = np.append(res, start_phi - tmp + random.uniform(-1, 1)*1e-2)
             tmp = tmp-arr[i]
         return res
 
-    def plot_warm_map(self, param, way, count,pdf):
+    def plot_warm_map(self, param, way, count,pdf,dop_title=''):
     
         phi,eps,alpha,t_max = param
         
         v = np.zeros(len(phi))
-        v = v + 1e-1
+        v = v + eps
         # for i in range(len(phi)):#
         #     phi[i] += eps
         #     v[i] += eps
@@ -749,7 +749,7 @@ class Original_sist(object):
             matrix = np.append(matrix,a[i])
         
         matrix = matrix.reshape((len(phi),len(matrix)//len(phi)))
-
+        # print(matrix)
         l = len(phi) - 1
         while l>=0:
             matrix[l] = matrix[l] - matrix[0]
@@ -757,25 +757,43 @@ class Original_sist(object):
 
 
         # matrix += eps_map
-        fig, ax = plt.subplots()
+        # fig, ax = plt.subplots()
+        fig = plt.figure(figsize=(10,4))
         matrix = np.angle(np.exp(1j*matrix))
         # print(matrix)
-        p = ax.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
-        fig.colorbar(p,label=r'$\varphi_1 - \varphi_i$')
+        p = plt.imshow(matrix, cmap ='hsv',vmin=-np.pi, vmax=np.pi, interpolation='nearest', extent=[0,len(phi)*50,0,len(phi)], aspect='auto')
+        fig.colorbar(p,label=r'($\varphi_1 - \varphi_i$) mod $2\pi$')
         plt.xlabel("t")
         plt.ylabel("N")
+        plt.title(dop_title)
         pdf.savefig()
         plt.close(fig)
         # plt.savefig(way + f'graph_{count+1}.png')
         plt.clf()
 
+    def __work_hot_plot__(self,x,res,start_phi,way,dop_title = ''): 
+        phi1 = self.up_arr(start_phi,x,self.N,self.N)
+        alpha = x[2]
+        m = x[3]
+        t_max = 10000
 
+        tmp_count = res.index(x)
+        if dop_title != '':
+            if tmp_count  == 0:
+                dop_title += 'koleb'
+            if tmp_count  == 1:
+                dop_title += 'one'
+            if tmp_count  == 2:
+                dop_title += 'two'
+        
+        self.plot_warm_map([phi1,eps,alpha,t_max], way,tmp_count, dop_title)
     #тепловая карта---------------------------------------------------------------------------------------------------
 
 
 if __name__ == "__main__":
-    tmp = [9, 1, 1]
-    ors = Original_sist(p = tmp, fi = 0)
+    tmp = [7, 8, 1] # [N,m,omega]
+    ors = Original_sist(p = tmp, fi = 1)
     # ors.dinamic(params=[[0.0, 0.0, 3, 1, 0.0]])
     
-    ors.sost_in_fi(key='st')
+    ors.sost_in_fi(key='un_st')
+    

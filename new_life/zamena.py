@@ -14,8 +14,9 @@ from scipy.integrate import solve_ivp
 
 N_JOB = 4
 col_razb = 10
-MAX_GRAPH = 50
-eps = 0.1
+MAX_GRAPH = 100
+eps = 0.01
+max_time = 500
 
 
 
@@ -47,9 +48,9 @@ class Equilibrium_states(object):
         # y with 1 dots
         f[1] = w
         # x with 2 dot
-        f[2] = 1/m*(1/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
+        f[2] = 1/m*(0.5/N * ((M - K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(x-alpha)-(N-M-K)*np.sin(y+alpha)-(N-M-K)*np.sin(x-y-alpha)) - v)
         # y with 2 dot
-        f[3] = 1/m*(1/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
+        f[3] = 1/m*(0.5/N * ((N-M-2*K)*np.sin(alpha) - M*np.sin(x+alpha) - K*np.sin(y-alpha)-(N-M-K)*np.sin(y+alpha)-M*np.sin(y-x-alpha)) - w)
         
         return f
     
@@ -107,7 +108,6 @@ class Equilibrium_states(object):
         Y = np.linspace(ran_y[0],ran_y[1],col_razb)
         v = 0
         w = 0
-        
         for x in X:
             for y in Y:
                 sol = root(self.syst_root,[x,y,v,w],method='lm')
@@ -117,17 +117,17 @@ class Equilibrium_states(object):
                 if (xar>=0 and xar<2*np.pi) and (yar<2*np.pi and yar>=0):
                     if [round(xar,3),round(yar,3),self.K,self.M,round(self.alpha,5)] not in all_sol:
                         if round(xar,2) == round(2*np.pi,2) and  round(yar,2) != round(2*np.pi,2):
-                            all_sol_full.append([0.0,yar,self.K,self.M,round(self.alpha,5)])
-                            all_sol.append([0.0,round(yar,3),self.K,self.M,round(self.alpha,5)])
+                            all_sol_full.append([0.0,yar,self.K,self.M,round(self.alpha,5),self.m])
+                            all_sol.append([0.0,round(yar,3),self.K,self.M,round(self.alpha,5),self.m])
                         elif round(yar,2) == round(2*np.pi,2) and round(xar,2) != round(2*np.pi,2):
-                            all_sol_full.append([xar,0.0,self.K,self.M,round(self.alpha,5)])
-                            all_sol.append([round(xar,3),0.0,self.K,self.M,round(self.alpha,5)])
+                            all_sol_full.append([xar,0.0,self.K,self.M,round(self.alpha,5),self.m])
+                            all_sol.append([round(xar,3),0.0,self.K,self.M,round(self.alpha,5),self.m])
                         elif (round(xar,2) == round(2*np.pi,2) and round(yar,2) == round(2*np.pi,2)):
-                            all_sol_full.append([0.0,0.0,self.K,self.M,round(self.alpha,5)])
-                            all_sol.append([0.0,0.0,self.K,self.M,round(self.alpha,5)])
+                            all_sol_full.append([0.0,0.0,self.K,self.M,round(self.alpha,5),self.m])
+                            all_sol.append([0.0,0.0,self.K,self.M,round(self.alpha,5),self.m])
                         else:
-                            all_sol_full.append([xar,yar,self.K,self.M,round(self.alpha,5)])
-                            all_sol.append([round(xar,3),round(yar,3),self.K,self.M,round(self.alpha,5)])
+                            all_sol_full.append([xar,yar,self.K,self.M,round(self.alpha,5),self.m])
+                            all_sol.append([round(xar,3),round(yar,3),self.K,self.M,round(self.alpha,5),self.m])
         
         new_arr = self.__trash_off__(all_sol_full)
         # new_arr = [el for el, _ in groupby(all_sol)]
@@ -159,9 +159,8 @@ class Equilibrium_states(object):
 
     #матрица якоби
     def jakobi(self, param):
-        x,y,K,M,alpha = param
+        x,y,K,M,alpha,m = param
         N = self.N
-        m = self.m
         
         f = []
         f.append([-1/m, 0, -(M*np.cos(alpha + x) - np.cos(alpha - x + y)*(K + M - N) + K*np.cos(alpha - x))/(N*m),
@@ -226,7 +225,7 @@ class Equilibrium_states(object):
         start_point=np.zeros(4)
         start_point[0],start_point[1], self.K,self.M,self.alpha = params 
         start_point[0] = start_point[0]+eps
-        start_point[1] = start_point[1]+eps
+        start_point[1] = start_point[1]+2*eps
         
         tmp = integrate.odeint(self.syst, start_point, self.t)
         plt.plot(self.t,tmp[:,0],label="x")
@@ -239,17 +238,19 @@ class Equilibrium_states(object):
     #динамика, но сохраняем
     def rec_dinamic(self,way,z=1,params = [2.094395, 4.18879, 1, 1, 2.0943951023931953]):
         start_point=np.zeros(4)
-        start_point[0],start_point[1], self.K,self.M,self.alpha = params 
+        start_point[0],start_point[1], self.K,self.M,self.alpha,self.m = params 
         start_point[0] += eps
-        start_point[1] += eps
+        start_point[1] += 2*eps
+        start_point[2] += eps
+        start_point[3] += eps
         # tmp = integrate.odeint(self.syst, start_point, self.t)
-        tmp = solve_ivp(self.syst, [0,100], start_point, max_step = 0.1)
-        plt.plot(tmp.t,tmp.y[0],label='X = ' + r'$\varphi_1 - \varphi_2$')
-        plt.plot(tmp.t,tmp.y[1],label='Y = ' +r'$\varphi_1 - \varphi_3$', linestyle = '--')
+        tmp = solve_ivp(self.syst, [0,max_time], start_point, max_step = 0.1)
+        plt.plot(tmp.t,tmp.y[0],label='X = ' + r'$\varphi_1 - \varphi_2$') #np.angle(np.exp(1j*tmp.y[0]))
+        plt.plot(tmp.t,tmp.y[1],label='Y = ' +r'$\varphi_1 - \varphi_3$', linestyle = '--') #np.angle(np.exp(1j*tmp.y[1]))
         # plt.plot(self.t,tmp[:,0],label="x")
         # plt.plot(self.t,tmp[:,1],label="y", linestyle = '--')
-        plt.xlim(0, 100)
-        plt.ylim(-10, 20)
+        plt.xlim(0, max_time)
+        # plt.ylim(-4, 4)
         plt.xlabel('t')
         plt.ylabel(r'$\varphi_1 - \varphi_i$')
         plt.legend()
@@ -348,7 +349,8 @@ class Equilibrium_states(object):
         return all
 
 if __name__ == "__main__":
-    tmp = [9, 1]
+    tmp = [10, 1]
+
     es = Equilibrium_states(p = tmp)
     # es.dinamic(params=[6.283185, 1.427449, 2, 1, 1.0471975511965976])
     es.parall_st_eq() #подсчет всех состояний

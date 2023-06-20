@@ -1,3 +1,5 @@
+from numba import jit, cuda
+
 import numpy as np
 from zamena import Equilibrium_states as Reduc
 from original_sist import Original_sist as Orig
@@ -66,7 +68,7 @@ class Tongue(Reduc,Orig):
     #нахождение собственных значений
     def __eigenvalues__(self,sost):
         start_phi = 0
-        arr = [sost[0], sost[1], self.K, self.M, self.alpha, self.m]
+        arr = [sost[0], sost[1], self.K, self.M, self.alpha]
         start_phi = super().up_arr(start_phi,arr ,self.N,self.N)
         start_phi = np.append(start_phi,np.zeros(len(start_phi)))
 
@@ -270,7 +272,7 @@ class Tongue(Reduc,Orig):
     #основной блок
     def work(self,m):
         print(m)
-        self.N = 5
+        self.N = 13
         self.K, self.M = self.param[2:4]
         self.alpha = -np.pi
         sost_ravn = []
@@ -356,7 +358,7 @@ class Tongue(Reduc,Orig):
             tmp+=c
         
         return tmp_arr
-
+    
     def find_border_tongue(self,m_space, arr_par, way):
         border_arr = []
         for par in arr_par:
@@ -420,9 +422,8 @@ class Tongue(Reduc,Orig):
         # print(res)
         # border_arr_from_file.append(res)
         
-        color_arr = ['b','r','g','b','pink']
-        marker_arr = ['','--','--']
-        N_arr = [7,9,13]
+        color_arr = ['b','r','g','y']
+        marker_arr = ['','--','-.',]
         for i in range(len(border_arr_from_file)):
             x = border_arr_from_file[i]
             x = np.array(x)
@@ -439,28 +440,106 @@ class Tongue(Reduc,Orig):
             second_cluster = np.array(second_cluster)
             second_cluster = second_cluster.T
 
+            # new_second_cluster = self.sort(second_cluster)
+
+            # plt.scatter(first_cluster[0],first_cluster[1],c='b',alpha=0.3)
+            # plt.scatter(new_first_cluster[0],new_first_cluster[1],c='r',alpha=0.3)
+
             t1 = np.polyfit(first_cluster[0],first_cluster[1],7)
             f1 = np.poly1d(t1)
             t2 = np.polyfit(second_cluster[0],second_cluster[1],7)
             f2 = np.poly1d(t2)
             new_x = - first_cluster[0]
-            # m_space = m_space[0:999]
-            # m_space = m_space[::-1]
-            plt.plot(new_x,f1(first_cluster[0]),c=color_arr[i],label='N = ' + str(N_arr[i])) #label='X = ' + str(arr_par[i][0]) + ', Y = ' + str(arr_par[i][1]) + ', K = ' + str(arr_par[i][2]) + ', M = ' + str(arr_par[i][3]),
-            plt.plot(first_cluster[0],f1(first_cluster[0]),c=color_arr[i],alpha=0.5)
-            # plt.fill_betweenx(m_space,new_x,first_cluster[0],color='r',alpha=0.9)
-            # plt.fill_betweenx(m_space,-np.pi,first_cluster[0],color='b',alpha=0.9)
-            # plt.fill_betweenx(m_space,np.pi,new_x,color='b',alpha=0.9)
+
+            
+            # new_space = []
+            # for j in range(len(new_x)):
+            #     tmp_arr = np.linspace(first_cluster[0][i],new_x[i],round(100*m_space[j]),0)
+            #     for k in range(len(tmp_arr)):
+            #         new_space.append([tmp_arr[k],m_space[len(m_space)-j-1]])
+            # res = self.non_ust_obl(arr_par[i],new_space)
+            # plt.scatter(res[0],res[1],c=self.choose_colore(res[2]))
+
+            plt.plot(new_x,f1(first_cluster[0]),marker_arr[i],c=color_arr[i],label=arr_par[i])
+            plt.plot(first_cluster[0],f1(first_cluster[0]),marker_arr[i],c=color_arr[i])
             plt.xlabel(r'$\alpha$')
             plt.ylabel('m')
-            plt.xlim(0,np.pi)
-            plt.ylim(0.1,10)
+            plt.grid()
+            # plt.plot(new_second_cluster[0],f2(new_second_cluster[0]),c='y',alpha=0.5)
+            # plt.scatter(second_cluster[0],second_cluster[1],c='b',alpha=0.3)
+            # plt.scatter(new_second_cluster[0],new_second_cluster[1],c='r',alpha=0.3)
+            
+            
+            # plt.plot(new_x, f2(new_second_cluster[0]),c='r',alpha=0.5)
+            # args1, covar = curve_fit(self.mapping4, new_first_cluster[1], new_first_cluster[0]) 
+            # a1, b1 = args1[0], args1[1]
+            # args2, covar = curve_fit(self.mapping3, second_cluster[0], second_cluster[1]) 
+            # a2, b2, c2, d2 = args2[0], args2[1], args2[2], args2[3]
+
+            # y_fit1 = a1 + b1 * np.log(new_first_cluster[0])
+            # y_fit2 = a2 * np.exp(b2*second_cluster[0]**2 + c2*second_cluster[0] + d2) 
+            # plt.plot(new_first_cluster[0],y_fit1,alpha=0.5, c='y')
+            # plt.scatter(first_cluster[0],first_cluster[1],c='b',alpha=0.5)
+            
+            # args1, covar = curve_fit(self.mapping2, first_cluster[0], first_cluster[1]) 
+            # a1, b1, c1, d1, e1 = args1[0], args1[1], args1[2], args1[3], args1[4]
+            # args2, covar = curve_fit(self.mapping2, second_cluster[0], second_cluster[1]) 
+            # a2, b2, c2, d2, e2 = args2[0], args2[1], args2[2], args2[3], args2[4]
+
+            # y_fit1 = a1 * first_cluster[0]**4 + b1 * first_cluster[0]**3 + c1 *first_cluster[0]**2 + d1*first_cluster[0] + e1
+            # y_fit2 = a2 * second_cluster[0]**4 + b2 * second_cluster[0]**3 + c2 *second_cluster[0]**2 + d2*second_cluster[0] + e2
+            
+            # plt.plot(first_cluster[0],y_fit1,c=color_arr[i],alpha=0.5)
+            # plt.plot(second_cluster[0],y_fit2,c=color_arr[i],alpha=0.5,label=arr_par[i])
+            # plt.xlabel(r'$\alpha$')
+            # plt.ylabel('m')
+
+            # plt.scatter(first_cluster[0],first_cluster[1],c='y',alpha=0.3)
+            # plt.scatter(second_cluster[0],second_cluster[1],c='y',alpha=0.3)
+            # убираем высеры -------------------------------------------------------------------------------------------------
+
+            # new_first_cluster = []
+            # for k in range(len(first_cluster[1])):
+            #     if first_cluster[1][k]-y_fit1[k] < 0.5:
+            #             new_first_cluster.append([first_cluster[0][k],first_cluster[1][k]])
+            # new_second_cluster = []
+            # for k in range(len(second_cluster[1])-1):
+            #     if second_cluster[1][k] < second_cluster[1][k+1] + 0.01 and second_cluster[0][k] < second_cluster[0][k+1] + 0.01:  #or abs(second_cluster[1][k]-y_fit2[k])<0.3
+            #         new_second_cluster.append([second_cluster[0][k],second_cluster[1][k]])
+            # new_first_cluster = np.array(new_first_cluster)
+            # new_first_cluster = new_first_cluster.T
+            # new_second_cluster = np.array(new_second_cluster)
+            # new_second_cluster = new_second_cluster.T
+            # args1, covar = curve_fit(self.mapping3, new_first_cluster[0], new_first_cluster[1]) 
+            # a1, b1, c1= args1[0], args1[1], args1[2]
+            # args2, covar = curve_fit(self.mapping3, new_second_cluster[0], new_second_cluster[1]) 
+            # a2, b2, c2 = args2[0], args2[1], args2[2]
+            # y_fit1_new = a1 * np.exp(b1*new_first_cluster[0] + c1) 
+            # y_fit2_new = a2 * np.exp(b2*new_second_cluster[0] + c2) 
+            # # plt.plot(new_first_cluster[0],y_fit1_new, c='r',alpha=0.5)
+            # plt.plot(second_cluster[0],y_fit2,c='b',alpha=0.5)
+            # plt.plot(new_second_cluster[0],y_fit2_new, c='r',alpha=0.5)
+            # plt.scatter(second_cluster[0],second_cluster[1],c='b',alpha=0.5)
+            # plt.scatter(new_second_cluster[0],new_second_cluster[1],c='r',alpha=0.5)
+            
+            # ---------------------------------------------------------------------------------------
+
+
+
         plt.legend()
         plt.show()
+        
+            # joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.plot_eig_lvl)(m,par,h,proc) for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]])
+        
+        
+        # for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
+        #     self.plot_eig_lvl(m, par,1e-5)
 
     def plot_three_lvl_eig(self,m_space , param ,proc, h):
         for par in param:
             joblib.Parallel(n_jobs = N_JOB)(joblib.delayed(self.plot_eig_lvl)(m,par,h,proc) for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]])
+        # for m in [m_space[0],m_space[len(m_space)//2],m_space[len(m_space)-1]]:
+        #     self.plot_eig_lvl(m, par,1e-5)
     
     
     def mapping3(self, values_x, a, b, c): 
@@ -649,7 +728,7 @@ class Tongue(Reduc,Orig):
         self.__find_max_eig__(m,start_sost,h,proc)
         
         plt.show()
-
+    @jit(nopython=False, parallel=True)
     def func_to_paral(self,m,alpha,par):
         self.m = m
         self.alpha = alpha
@@ -694,17 +773,17 @@ class Tongue(Reduc,Orig):
                 flag = 6 #хаос
         return [m,alpha,flag]
 
-
+    @jit(nopython=False, parallel=True)
     def non_ust_obl(self,par,new_space):
         new_space = np.array(new_space)
         new_space = new_space.T
         m_space = new_space[1]
         al_space = new_space[0]
-
-        res_arr = joblib.Parallel(n_jobs = 6)(joblib.delayed(self.func_to_paral)(m,alpha,par) for m in m_space for alpha in al_space)
-        # for alpha in al_space:
-        #     for m in m_space:
-        #         res_arr = self.func_to_paral(m,alpha,par)
+        res_arr=[]
+        # res_arr = joblib.Parallel(n_jobs = 6)(joblib.delayed(self.func_to_paral)(m,alpha,par) for m in m_space for alpha in al_space)
+        for alpha in al_space:
+            for m in m_space:
+                res_arr.append(self.func_to_paral(m,alpha,par))
         res_arr = np.array(res_arr)
         res_arr = res_arr.T
         return res_arr
@@ -735,20 +814,20 @@ N_JOB = 6
 # h_eps = 0.01
 
 if __name__ == "__main__":
-    tmp = [4, 1, 1]
+    tmp = [13, 1, 1]
     par = [4.459709, 2.636232, 2, 1, 2.0944]#[4.75086, 4.75086, 1, 3, 2.0944]     [4.459709, 2.636232, 2, 1, 2.0944]
-    arr_par = [[4.459709, 2.636232, 2, 1, 2.0944, 1],[3.646953, 1.823477, 2, 2, 4.18879, 1],[1.654226, 3.308453, 6, 1, 2.0944,1]]#,[3.646953, 1.823477, 2, 2, 4.18879],[1.823477, 3.646953, 2, 1, 4.18879]]#,[3.646953, 1.823477, 2, 2, 3.14159]] #[4.459709, 2.636232, 2, 1, 2.0944],
+    arr_par = [[1.654226, 3.308453, 6, 1, 2.0944]] #[4.459709, 2.636232, 2, 1, 2.0944], [1.823477, 4.459709, 1, 2, 4.18879]
     h = 1e-4
     tong = Tongue(tmp,par,h)
-    way = f"new_life\\res\\n_{tong.N}\\border_tongue_all.txt"
-    way_tmp = f"new_life\\res\\n_{tong.N}\\border_tongue"
+    way = f"new_life\\res\\n_{tong.N}\\border_tongue_13.txt"
+    # way = "border_tongue_2.txt"
+    # way_tmp = f"new_life\\res\\n_{tong.N}\\border_tongue"
     # print(tong.tmp(1.8421052631578947))
     # tong.tmp(1, 2.0944)
     m_space = np.linspace(0.1,10,100)
     # tong.find_tongue(m_space)
-
-    # tong.find_border_tongue(m_space,arr_par,way)#,1e-3,0.5)
-    tong.plot_border_tongue(arr_par,way,m_space)
+    tong.find_border_tongue(m_space,arr_par,way)#,1e-3,0.5)
+    # tong.plot_border_tongue(arr_par,way,m_space)
 
     # tong.plot_three_lvl_eig(m_space,arr_par,1,1e-4)
 
